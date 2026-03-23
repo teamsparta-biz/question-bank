@@ -1,0 +1,149 @@
+// ---- DB 테이블 타입 ----
+
+export interface Question {
+  id: string
+  response_type: 'single_choice' | 'multiple_choice' | 'text'
+  title: string
+  description: string | null
+  current_version: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface QuestionVersion {
+  id: string
+  question_id: string
+  version: number
+  title: string
+  description: string | null
+  response_type: string
+  snapshot: Record<string, unknown> | null
+  created_at: string
+}
+
+export interface QuestionOption {
+  id: string
+  question_id: string
+  label: string
+  sort_order: number
+  is_correct: boolean
+  created_at: string
+}
+
+export interface Rubric {
+  id: string
+  question_id: string
+  title: string
+  description: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface RubricCriterion {
+  id: string
+  rubric_id: string
+  name: string
+  description: string | null
+  max_score: number
+  sort_order: number
+  created_at: string
+}
+
+export interface Topic {
+  code: string
+  domain: string
+  name: string
+  description: string | null
+  sort_order: number
+}
+
+export interface QuestionLabel {
+  id: string
+  question_id: string
+  question_type: 'mcq' | 'subjective'
+  domain: string | null
+  cognitive_level: string | null
+  question_format: string | null
+  topic_code: string | null
+  complexity: string | null
+  task_type: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ElementMapping {
+  id: string
+  question_id: string
+  element_id: string
+  is_active: boolean
+}
+
+export interface QuestionPool {
+  id: string
+  name: string
+  description: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface PoolQuestion {
+  id: string
+  pool_id: string
+  question_id: string
+  sort_order: number
+  created_at: string
+}
+
+// ---- 조인된 뷰 타입 ----
+
+export interface QuestionWithLabel extends Question {
+  question_label: QuestionLabel | null
+}
+
+export interface QuestionDetail extends Question {
+  question_label: QuestionLabel | null
+  question_option: QuestionOption[]
+  rubric: (Rubric & { rubric_criterion: RubricCriterion[] }) | null
+  element_mapping: ElementMapping[]
+  question_version: QuestionVersion[]
+}
+
+// ---- 폼 타입 ----
+
+export interface QuestionFormData {
+  response_type: Question['response_type']
+  title: string
+  description: string
+  is_active: boolean
+  // MCQ
+  options: { label: string; is_correct: boolean; sort_order: number }[]
+  // 라벨링
+  question_type: 'mcq' | 'subjective'
+  domain: string
+  cognitive_level: string
+  question_format: string
+  topic_code: string
+  // 주관식
+  complexity: string
+  task_type: string
+  elements: string[]
+  // 루브릭
+  rubric_title: string
+  rubric_description: string
+  criteria: { name: string; description: string; max_score: number; sort_order: number }[]
+}
+
+// ---- 필터 ----
+
+export interface QuestionFilters {
+  question_type: string
+  domain: string
+  cognitive_level: string
+  question_format: string
+  topic_code: string
+  complexity: string
+  is_active: string
+  search: string
+}
