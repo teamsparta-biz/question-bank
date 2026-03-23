@@ -7,6 +7,7 @@ import QuestionNewPage from './pages/QuestionNewPage'
 import QuestionDetailPage from './pages/QuestionDetailPage'
 import PoolsPage from './pages/PoolsPage'
 import PoolDetailPage from './pages/PoolDetailPage'
+import PoolPrintPage from './pages/PoolPrintPage'
 
 export default function App() {
   const { isAuthenticated, login } = useAuth()
@@ -16,15 +17,23 @@ export default function App() {
   }
 
   return (
-    <AppShell>
-      <Routes>
-        <Route path="/" element={<Navigate to="/questions" replace />} />
-        <Route path="/questions" element={<QuestionsPage />} />
-        <Route path="/questions/new" element={<QuestionNewPage />} />
-        <Route path="/questions/:id" element={<QuestionDetailPage />} />
-        <Route path="/pools" element={<PoolsPage />} />
-        <Route path="/pools/:id" element={<PoolDetailPage />} />
-      </Routes>
-    </AppShell>
+    <Routes>
+      {/* PDF 인쇄 페이지 — AppShell 없이 전체화면 */}
+      <Route path="/pools/:id/print" element={<PoolPrintPage />} />
+
+      {/* 일반 페이지 — AppShell 포함 */}
+      <Route path="*" element={
+        <AppShell>
+          <Routes>
+            <Route path="/" element={<Navigate to="/questions" replace />} />
+            <Route path="/questions" element={<QuestionsPage />} />
+            <Route path="/questions/new" element={<QuestionNewPage />} />
+            <Route path="/questions/:id" element={<QuestionDetailPage />} />
+            <Route path="/pools" element={<PoolsPage />} />
+            <Route path="/pools/:id" element={<PoolDetailPage />} />
+          </Routes>
+        </AppShell>
+      } />
+    </Routes>
   )
 }

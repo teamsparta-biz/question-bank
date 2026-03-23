@@ -351,14 +351,22 @@ export default function PoolDetailPage() {
 
       {/* 문항 추가 + 일괄 펼치기 */}
       <div className="flex justify-between mb-3">
-        <div>
+        <div className="flex gap-2">
           {questions.length > 0 && (
-            <button
-              onClick={toggleAll}
-              className="text-xs text-slate-500 hover:text-slate-700 border border-slate-300 px-3 py-1.5 rounded-lg"
-            >
-              {allExpanded ? '전체 접기' : '전체 펼치기'}
-            </button>
+            <>
+              <button
+                onClick={toggleAll}
+                className="text-xs text-slate-500 hover:text-slate-700 border border-slate-300 px-3 py-1.5 rounded-lg"
+              >
+                {allExpanded ? '전체 접기' : '전체 펼치기'}
+              </button>
+              <Link
+                to={`/pools/${id}/print`}
+                className="text-xs text-slate-500 hover:text-slate-700 border border-slate-300 px-3 py-1.5 rounded-lg"
+              >
+                PDF 출력
+              </Link>
+            </>
           )}
         </div>
         <button
