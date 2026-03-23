@@ -144,6 +144,7 @@ export interface QuestionFilters {
   question_format: string
   topic_code: string
   complexity: string
+  task_type: string
   is_active: string
   search: string
 }

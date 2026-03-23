@@ -14,6 +14,7 @@ const INITIAL_FILTERS: QuestionFilters = {
   question_format: '',
   topic_code: '',
   complexity: '',
+  task_type: '',
   is_active: 'true',
   search: '',
 }

@@ -42,6 +42,9 @@ export function useQuestions(filters: QuestionFilters, page: number) {
     if (filters.complexity) {
       query = query.eq('question_label.complexity', filters.complexity)
     }
+    if (filters.task_type) {
+      query = query.eq('question_label.task_type', filters.task_type)
+    }
 
     const { data, count, error } = await query
 
