@@ -272,6 +272,15 @@ export default function PoolDetailPage() {
     })
   }
 
+  const allExpanded = questions.length > 0 && expanded.size >= questions.length
+  const toggleAll = () => {
+    if (allExpanded) {
+      setExpanded(new Set())
+    } else {
+      setExpanded(new Set(questions.map(pq => pq.question_id)))
+    }
+  }
+
   const handleAdd = async (ids: string[]) => {
     try {
       for (let i = 0; i < ids.length; i++) {
@@ -340,8 +349,18 @@ export default function PoolDetailPage() {
         </div>
       </div>
 
-      {/* 문항 추가 */}
-      <div className="flex justify-end mb-3">
+      {/* 문항 추가 + 일괄 펼치기 */}
+      <div className="flex justify-between mb-3">
+        <div>
+          {questions.length > 0 && (
+            <button
+              onClick={toggleAll}
+              className="text-xs text-slate-500 hover:text-slate-700 border border-slate-300 px-3 py-1.5 rounded-lg"
+            >
+              {allExpanded ? '전체 접기' : '전체 펼치기'}
+            </button>
+          )}
+        </div>
         <button
           onClick={() => setShowPicker(!showPicker)}
           className="bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
