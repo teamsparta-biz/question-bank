@@ -41,6 +41,12 @@ export function useQuestions(filters: QuestionFilters, page: number) {
     if (filters.difficulty) {
       query = query.eq('question_label.difficulty', filters.difficulty)
     }
+    if (filters.complexity) {
+      query = query.eq('question_label.complexity', filters.complexity)
+    }
+    if (filters.task_type) {
+      query = query.eq('question_label.task_type', filters.task_type)
+    }
 
     const { data, count, error } = await query
 
@@ -107,6 +113,8 @@ export async function createQuestion(data: {
     position?: string
     topic_id?: string
     difficulty?: string
+    complexity?: string
+    task_type?: string
   }
   elements?: string[]
   rubric?: {
@@ -136,6 +144,8 @@ export async function createQuestion(data: {
     position: data.label.position || null,
     topic_id: data.label.topic_id || null,
     difficulty: data.label.difficulty || null,
+    complexity: data.label.complexity || null,
+    task_type: data.label.task_type || null,
   })
 
   await supabase.from('question_version').insert({

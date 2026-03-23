@@ -24,6 +24,8 @@ export default function QuestionNewPage() {
           position: data.position || undefined,
           topic_id: data.topic_id || undefined,
           difficulty: data.difficulty || undefined,
+          complexity: data.complexity || undefined,
+          task_type: data.task_type || undefined,
         },
         elements: isSubjective ? data.elements : undefined,
         rubric: isSubjective && data.rubric_title ? {

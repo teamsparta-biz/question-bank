@@ -71,6 +71,8 @@ export interface QuestionLabel {
   position: string | null
   topic_id: string | null
   difficulty: string | null
+  complexity: string | null
+  task_type: string | null
   created_at: string
   updated_at: string
 }
@@ -122,13 +124,16 @@ export interface QuestionFormData {
   is_active: boolean
   // MCQ
   options: { label: string; is_correct: boolean; sort_order: number }[]
-  // 분류 (5축 통합)
-  category: string
+  // 공통 분류
   industry: string
   position: string
-  topic_id: string
   difficulty: string
+  // 객관식 전용
+  category: string
+  topic_id: string
   // 주관식 전용
+  complexity: string
+  task_type: string
   elements: string[]
   rubric_title: string
   rubric_description: string
@@ -143,6 +148,8 @@ export interface QuestionFilters {
   industry: string
   position: string
   difficulty: string
+  complexity: string
+  task_type: string
   is_active: string
   search: string
 }

@@ -1,4 +1,4 @@
-// 카테고리
+// 카테고리 (객관식)
 export const CATEGORIES = {
   P: '프롬프트 리터러시',
   E: '윤리/보안',
@@ -25,10 +25,8 @@ export type Industry = keyof typeof INDUSTRIES
 // 직급
 export const POSITIONS = {
   공통: '공통',
-  사원: '사원',
-  대리: '대리',
-  과장: '과장',
-  부장: '부장',
+  실무자: '실무자',
+  직책자: '직책자',
   임원: '임원',
 } as const
 
@@ -36,12 +34,31 @@ export type Position = keyof typeof POSITIONS
 
 // 난이도
 export const DIFFICULTIES = {
-  상: '상',
-  중: '중',
-  하: '하',
+  'Lv.1': 'Lv.1',
+  'Lv.2': 'Lv.2',
+  'Lv.3': 'Lv.3',
 } as const
 
 export type Difficulty = keyof typeof DIFFICULTIES
+
+// 복잡도 (주관식)
+export const COMPLEXITIES = {
+  basic: '단순 (8E)',
+  standard: '표준 (15E)',
+  advanced: '심화 (20E)',
+} as const
+
+export type Complexity = keyof typeof COMPLEXITIES
+
+// 과제 유형 (주관식)
+export const TASK_TYPES = {
+  generate: '생성',
+  analyze: '분석',
+  transform: '변환',
+  extract: '추출',
+} as const
+
+export type TaskType = keyof typeof TASK_TYPES
 
 // 응답 유형
 export const RESPONSE_TYPES = {

@@ -30,6 +30,8 @@ export default function QuestionDetailPage() {
     position: label?.position ?? '',
     topic_id: label?.topic_id ?? '',
     difficulty: label?.difficulty ?? '',
+    complexity: label?.complexity ?? '',
+    task_type: label?.task_type ?? '',
     elements: (question.element_mapping ?? []).filter(e => e.is_active).map(e => e.element_id),
     rubric_title: question.rubric?.title ?? '',
     rubric_description: question.rubric?.description ?? '',
@@ -54,6 +56,8 @@ export default function QuestionDetailPage() {
           position: data.position || undefined,
           topic_id: data.topic_id || undefined,
           difficulty: data.difficulty || undefined,
+          complexity: data.complexity || undefined,
+          task_type: data.task_type || undefined,
         },
         elements: isSubjective ? data.elements : undefined,
         rubric: isSubjective && data.rubric_title ? {

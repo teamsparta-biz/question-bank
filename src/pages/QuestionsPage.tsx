@@ -12,12 +12,14 @@ const INITIAL_FILTERS: QuestionFilters = {
   industry: '',
   position: '',
   difficulty: '',
-  is_active: 'true',
+  complexity: '',
+  task_type: '',
+  is_active: '',
   search: '',
 }
 
 const CAT_COLORS: Record<string, string> = { P: 'blue', E: 'red', D: 'green', W: 'purple' }
-const DIFF_COLORS: Record<string, string> = { '상': 'red', '중': 'amber', '하': 'green' }
+const DIFF_COLORS: Record<string, string> = { 'Lv.1': 'green', 'Lv.2': 'amber', 'Lv.3': 'red' }
 
 export default function QuestionsPage() {
   const [filters, setFilters] = useState<QuestionFilters>(INITIAL_FILTERS)

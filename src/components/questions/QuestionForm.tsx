@@ -21,6 +21,8 @@ const EMPTY_FORM: QuestionFormData = {
   position: '',
   topic_id: '',
   difficulty: '',
+  complexity: '',
+  task_type: '',
   elements: [],
   rubric_title: '',
   rubric_description: '',
@@ -125,13 +127,16 @@ export default function QuestionForm({ initialData, onSave, saving }: Props) {
         />
       )}
 
-      {/* 분류 (5축 통합) */}
+      {/* 분류 */}
       <LabelForm
+        isSubjective={isSubjective}
         category={form.category}
         industry={form.industry}
         position={form.position}
         topicId={form.topic_id}
         difficulty={form.difficulty}
+        complexity={form.complexity}
+        taskType={form.task_type}
         onChange={(key, value) => set(key as keyof QuestionFormData, value)}
       />
 

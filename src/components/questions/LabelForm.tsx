@@ -1,14 +1,17 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../../lib/supabase'
-import { CATEGORIES, INDUSTRIES, POSITIONS, DIFFICULTIES } from '../../lib/constants'
+import { CATEGORIES, INDUSTRIES, POSITIONS, DIFFICULTIES, COMPLEXITIES, TASK_TYPES } from '../../lib/constants'
 import type { Topic } from '../../types'
 
 interface Props {
+  isSubjective: boolean
   category: string
   industry: string
   position: string
   topicId: string
   difficulty: string
+  complexity: string
+  taskType: string
   onChange: (key: string, value: string) => void
 }
 
@@ -31,7 +34,7 @@ function Select({ label, value, onChange, options }: {
   )
 }
 
-export default function LabelForm({ category, industry, position, topicId, difficulty, onChange }: Props) {
+export default function LabelForm({ isSubjective, category, industry, position, topicId, difficulty, complexity, taskType, onChange }: Props) {
   const [allTopics, setAllTopics] = useState<Topic[]>([])
 
   useEffect(() => {
@@ -39,8 +42,6 @@ export default function LabelForm({ category, industry, position, topicId, diffi
       .then(({ data }) => setAllTopics((data ?? []) as Topic[]))
   }, [])
 
-  // 카테고리 + 산업 + 직급에 따라 토픽 필터링
-  // '공통'이 포함된 토픽은 해당 축에서 항상 노출
   const filteredTopics = useMemo(() => {
     return allTopics.filter(t => {
       if (category && t.category !== category) return false
@@ -53,30 +54,56 @@ export default function LabelForm({ category, industry, position, topicId, diffi
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5">
       <h3 className="text-sm font-semibold text-slate-700 mb-3">분류</h3>
+
+      {/* 객관식: 카테고리 + 토픽 */}
+      {!isSubjective && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
+          <Select
+            label="카테고리"
+            value={category}
+            onChange={v => { onChange('category', v); onChange('topic_id', '') }}
+            options={Object.entries(CATEGORIES).map(([k, v]) => ({ value: k, label: `${k} ${v}` }))}
+          />
+          <Select
+            label="토픽"
+            value={topicId}
+            onChange={v => onChange('topic_id', v)}
+            options={filteredTopics.map(t => ({ value: t.id, label: `${t.code} ${t.name}` }))}
+          />
+        </div>
+      )}
+
+      {/* 주관식: 복잡도 + 과제유형 */}
+      {isSubjective && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
+          <Select
+            label="복잡도"
+            value={complexity}
+            onChange={v => onChange('complexity', v)}
+            options={Object.entries(COMPLEXITIES).map(([k, v]) => ({ value: k, label: v }))}
+          />
+          <Select
+            label="과제 유형"
+            value={taskType}
+            onChange={v => onChange('task_type', v)}
+            options={Object.entries(TASK_TYPES).map(([k, v]) => ({ value: k, label: v }))}
+          />
+        </div>
+      )}
+
+      {/* 공통: 산업 + 직급 + 난이도 */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <Select
-          label="카테고리"
-          value={category}
-          onChange={v => { onChange('category', v); onChange('topic_id', '') }}
-          options={Object.entries(CATEGORIES).map(([k, v]) => ({ value: k, label: `${k} ${v}` }))}
-        />
         <Select
           label="산업"
           value={industry}
-          onChange={v => { onChange('industry', v); onChange('topic_id', '') }}
+          onChange={v => { onChange('industry', v); if (!isSubjective) onChange('topic_id', '') }}
           options={Object.entries(INDUSTRIES).map(([k, v]) => ({ value: k, label: v }))}
         />
         <Select
           label="직급"
           value={position}
-          onChange={v => { onChange('position', v); onChange('topic_id', '') }}
+          onChange={v => { onChange('position', v); if (!isSubjective) onChange('topic_id', '') }}
           options={Object.entries(POSITIONS).map(([k, v]) => ({ value: k, label: v }))}
-        />
-        <Select
-          label="토픽"
-          value={topicId}
-          onChange={v => onChange('topic_id', v)}
-          options={filteredTopics.map(t => ({ value: t.id, label: `${t.code} ${t.name}` }))}
         />
         <Select
           label="난이도"
