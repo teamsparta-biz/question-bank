@@ -11,23 +11,22 @@ export default function QuestionNewPage() {
   const handleSave = async (data: QuestionFormData) => {
     setSaving(true)
     try {
+      const isSubjective = data.response_type === 'text'
       const id = await createQuestion({
         response_type: data.response_type,
         title: data.title,
         description: data.description,
         is_active: data.is_active,
-        options: data.question_type === 'mcq' ? data.options : undefined,
+        options: !isSubjective ? data.options : undefined,
         label: {
-          question_type: data.question_type,
-          domain: data.domain || undefined,
-          cognitive_level: data.cognitive_level || undefined,
-          question_format: data.question_format || undefined,
-          topic_code: data.topic_code || undefined,
-          complexity: data.complexity || undefined,
-          task_type: data.task_type || undefined,
+          category: data.category || undefined,
+          industry: data.industry || undefined,
+          position: data.position || undefined,
+          topic_id: data.topic_id || undefined,
+          difficulty: data.difficulty || undefined,
         },
-        elements: data.question_type === 'subjective' ? data.elements : undefined,
-        rubric: data.question_type === 'subjective' && data.rubric_title ? {
+        elements: isSubjective ? data.elements : undefined,
+        rubric: isSubjective && data.rubric_title ? {
           title: data.rubric_title,
           description: data.rubric_description,
           criteria: data.criteria,

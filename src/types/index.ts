@@ -51,23 +51,26 @@ export interface RubricCriterion {
 }
 
 export interface Topic {
+  id: string
   code: string
-  domain: string
+  category: string
   name: string
   description: string | null
+  industries: string[]
+  positions: string[]
   sort_order: number
+  is_active: boolean
+  created_at: string
 }
 
 export interface QuestionLabel {
   id: string
   question_id: string
-  question_type: 'mcq' | 'subjective'
-  domain: string | null
-  cognitive_level: string | null
-  question_format: string | null
-  topic_code: string | null
-  complexity: string | null
-  task_type: string | null
+  category: string | null
+  industry: string | null
+  position: string | null
+  topic_id: string | null
+  difficulty: string | null
   created_at: string
   updated_at: string
 }
@@ -119,17 +122,14 @@ export interface QuestionFormData {
   is_active: boolean
   // MCQ
   options: { label: string; is_correct: boolean; sort_order: number }[]
-  // 라벨링
-  question_type: 'mcq' | 'subjective'
-  domain: string
-  cognitive_level: string
-  question_format: string
-  topic_code: string
-  // 주관식
-  complexity: string
-  task_type: string
+  // 분류 (5축 통합)
+  category: string
+  industry: string
+  position: string
+  topic_id: string
+  difficulty: string
+  // 주관식 전용
   elements: string[]
-  // 루브릭
   rubric_title: string
   rubric_description: string
   criteria: { name: string; description: string; max_score: number; sort_order: number }[]
@@ -138,13 +138,11 @@ export interface QuestionFormData {
 // ---- 필터 ----
 
 export interface QuestionFilters {
-  question_type: string
-  domain: string
-  cognitive_level: string
-  question_format: string
-  topic_code: string
-  complexity: string
-  task_type: string
+  question_type: string  // 'mcq' | 'subjective' | ''
+  category: string
+  industry: string
+  position: string
+  difficulty: string
   is_active: string
   search: string
 }

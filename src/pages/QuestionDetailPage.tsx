@@ -25,13 +25,11 @@ export default function QuestionDetailPage() {
     options: (question.question_option ?? [])
       .sort((a, b) => a.sort_order - b.sort_order)
       .map(o => ({ label: o.label, is_correct: o.is_correct, sort_order: o.sort_order })),
-    question_type: label?.question_type ?? 'mcq',
-    domain: label?.domain ?? '',
-    cognitive_level: label?.cognitive_level ?? '',
-    question_format: label?.question_format ?? '',
-    topic_code: label?.topic_code ?? '',
-    complexity: label?.complexity ?? '',
-    task_type: label?.task_type ?? '',
+    category: label?.category ?? '',
+    industry: label?.industry ?? '',
+    position: label?.position ?? '',
+    topic_id: label?.topic_id ?? '',
+    difficulty: label?.difficulty ?? '',
     elements: (question.element_mapping ?? []).filter(e => e.is_active).map(e => e.element_id),
     rubric_title: question.rubric?.title ?? '',
     rubric_description: question.rubric?.description ?? '',
@@ -43,23 +41,22 @@ export default function QuestionDetailPage() {
   const handleSave = async (data: QuestionFormData) => {
     setSaving(true)
     try {
+      const isSubjective = data.response_type === 'text'
       await updateQuestion(question.id, question.current_version, {
         response_type: data.response_type,
         title: data.title,
         description: data.description,
         is_active: data.is_active,
-        options: data.question_type === 'mcq' ? data.options : undefined,
+        options: !isSubjective ? data.options : undefined,
         label: {
-          question_type: data.question_type,
-          domain: data.domain || undefined,
-          cognitive_level: data.cognitive_level || undefined,
-          question_format: data.question_format || undefined,
-          topic_code: data.topic_code || undefined,
-          complexity: data.complexity || undefined,
-          task_type: data.task_type || undefined,
+          category: data.category || undefined,
+          industry: data.industry || undefined,
+          position: data.position || undefined,
+          topic_id: data.topic_id || undefined,
+          difficulty: data.difficulty || undefined,
         },
-        elements: data.question_type === 'subjective' ? data.elements : undefined,
-        rubric: data.question_type === 'subjective' && data.rubric_title ? {
+        elements: isSubjective ? data.elements : undefined,
+        rubric: isSubjective && data.rubric_title ? {
           title: data.rubric_title,
           description: data.rubric_description,
           criteria: data.criteria,
@@ -79,9 +76,7 @@ export default function QuestionDetailPage() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/questions')} className="text-slate-400 hover:text-slate-600">
-            &larr;
-          </button>
+          <button onClick={() => navigate('/questions')} className="text-slate-400 hover:text-slate-600">&larr;</button>
           <h2 className="text-lg font-bold text-slate-900">문항 수정</h2>
           <span className="text-sm text-slate-400">v{question.current_version}</span>
         </div>

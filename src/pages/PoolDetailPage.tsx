@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { usePoolDetail, addQuestionToPool, removeQuestionFromPool } from '../hooks/usePools'
 import { supabase } from '../lib/supabase'
 import Badge from '../components/common/Badge'
-import { DOMAINS, COGNITIVE_LEVELS } from '../lib/constants'
+import { CATEGORIES } from '../lib/constants'
 import type { QuestionWithLabel } from '../types'
 
 const DOMAIN_COLORS: Record<string, string> = { P: 'blue', E: 'red', D: 'green', W: 'purple' }
@@ -54,17 +54,17 @@ export default function PoolDetailPage() {
   // 분류 통계
   const stats = {
     mcq: 0, subjective: 0,
-    domains: {} as Record<string, number>,
-    levels: {} as Record<string, number>,
+    categories: {} as Record<string, number>,
+    difficulties: {} as Record<string, number>,
   }
   questions.forEach(pq => {
     const label = Array.isArray(pq.question?.question_label)
       ? pq.question.question_label[0]
       : pq.question?.question_label
-    if (label?.question_type === 'mcq') stats.mcq++
-    else stats.subjective++
-    if (label?.domain) stats.domains[label.domain] = (stats.domains[label.domain] || 0) + 1
-    if (label?.cognitive_level) stats.levels[label.cognitive_level] = (stats.levels[label.cognitive_level] || 0) + 1
+    if (pq.question?.response_type === 'text') stats.subjective++
+    else stats.mcq++
+    if (label?.category) stats.categories[label.category] = (stats.categories[label.category] || 0) + 1
+    if (label?.difficulty) stats.difficulties[label.difficulty] = (stats.difficulties[label.difficulty] || 0) + 1
   })
 
   const filteredAvailable = allQuestions
@@ -96,15 +96,15 @@ export default function PoolDetailPage() {
             <span className="text-slate-500">주관식:</span>
             <span className="ml-1 font-semibold">{stats.subjective}</span>
           </div>
-          {Object.entries(stats.domains).map(([d, c]) => (
+          {Object.entries(stats.categories).map(([d, c]) => (
             <div key={d}>
-              <Badge label={`${d} ${DOMAINS[d as keyof typeof DOMAINS] ?? d}`} color={DOMAIN_COLORS[d] as 'blue' ?? 'slate'} />
+              <Badge label={`${d} ${CATEGORIES[d as keyof typeof CATEGORIES] ?? d}`} color={DOMAIN_COLORS[d] as 'blue' ?? 'slate'} />
               <span className="ml-1 font-semibold text-slate-700">{c}</span>
             </div>
           ))}
-          {Object.entries(stats.levels).sort().map(([l, c]) => (
-            <div key={l}>
-              <Badge label={`${l} ${COGNITIVE_LEVELS[l as keyof typeof COGNITIVE_LEVELS] ?? l}`} color="amber" />
+          {Object.entries(stats.difficulties).map(([d, c]) => (
+            <div key={d}>
+              <Badge label={`난이도 ${d}`} color="amber" />
               <span className="ml-1 font-semibold text-slate-700">{c}</span>
             </div>
           ))}
@@ -155,16 +155,13 @@ export default function PoolDetailPage() {
           <div className="p-6 text-center text-slate-400">문항이 없습니다. 위 버튼으로 추가하세요.</div>
         ) : (
           questions.map((pq, i) => {
-            const label = Array.isArray(pq.question?.question_label)
-              ? pq.question.question_label[0]
-              : pq.question?.question_label
             return (
               <div key={pq.id} className="flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="text-xs text-slate-400 w-5">{i + 1}</span>
                   <Badge
-                    label={label?.question_type === 'mcq' ? '객관식' : '주관식'}
-                    color={label?.question_type === 'mcq' ? 'blue' : 'teal'}
+                    label={pq.question?.response_type === 'text' ? '주관식' : '객관식'}
+                    color={pq.question?.response_type === 'text' ? 'teal' : 'blue'}
                   />
                   <span className="text-sm text-slate-700 truncate">{pq.question?.title}</span>
                 </div>

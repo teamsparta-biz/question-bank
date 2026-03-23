@@ -1,37 +1,29 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuestions } from '../hooks/useQuestions'
-import { supabase } from '../lib/supabase'
 import FilterPanel from '../components/common/FilterPanel'
 import Badge from '../components/common/Badge'
-import { DOMAINS, COGNITIVE_LEVELS, QUESTION_FORMATS, COMPLEXITIES } from '../lib/constants'
-import type { QuestionFilters, Topic } from '../types'
+import { CATEGORIES } from '../lib/constants'
+import type { QuestionFilters } from '../types'
 
 const INITIAL_FILTERS: QuestionFilters = {
   question_type: '',
-  domain: '',
-  cognitive_level: '',
-  question_format: '',
-  topic_code: '',
-  complexity: '',
-  task_type: '',
+  category: '',
+  industry: '',
+  position: '',
+  difficulty: '',
   is_active: 'true',
   search: '',
 }
 
-const DOMAIN_COLORS: Record<string, string> = { P: 'blue', E: 'red', D: 'green', W: 'purple' }
+const CAT_COLORS: Record<string, string> = { P: 'blue', E: 'red', D: 'green', W: 'purple' }
+const DIFF_COLORS: Record<string, string> = { '상': 'red', '중': 'amber', '하': 'green' }
 
 export default function QuestionsPage() {
   const [filters, setFilters] = useState<QuestionFilters>(INITIAL_FILTERS)
   const [page, setPage] = useState(0)
-  const [topics, setTopics] = useState<Topic[]>([])
 
   const { questions, total, loading, pageSize } = useQuestions(filters, page)
-
-  useEffect(() => {
-    supabase.from('topic').select('*').order('domain').order('sort_order')
-      .then(({ data }) => setTopics((data ?? []) as Topic[]))
-  }, [])
 
   useEffect(() => { setPage(0) }, [filters])
 
@@ -52,7 +44,7 @@ export default function QuestionsPage() {
         </Link>
       </div>
 
-      <FilterPanel filters={filters} topics={topics} onChange={setFilters} />
+      <FilterPanel filters={filters} onChange={setFilters} />
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         {loading ? (
@@ -73,12 +65,13 @@ export default function QuestionsPage() {
             <tbody className="divide-y divide-slate-100">
               {questions.map(q => {
                 const label = q.question_label
+                const isSubjective = q.response_type === 'text'
                 return (
                   <tr key={q.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3">
                       <Badge
-                        label={label?.question_type === 'mcq' ? '객관식' : '주관식'}
-                        color={label?.question_type === 'mcq' ? 'blue' : 'teal'}
+                        label={isSubjective ? '주관식' : '객관식'}
+                        color={isSubjective ? 'teal' : 'blue'}
                       />
                     </td>
                     <td className="px-4 py-3">
@@ -89,17 +82,17 @@ export default function QuestionsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
-                        {label?.domain && (
-                          <Badge label={`${label.domain} ${DOMAINS[label.domain as keyof typeof DOMAINS] ?? ''}`} color={DOMAIN_COLORS[label.domain] as 'blue' ?? 'slate'} />
+                        {label?.category && (
+                          <Badge label={`${label.category} ${CATEGORIES[label.category as keyof typeof CATEGORIES] ?? ''}`} color={CAT_COLORS[label.category] as 'blue' ?? 'slate'} />
                         )}
-                        {label?.cognitive_level && (
-                          <Badge label={`${label.cognitive_level} ${COGNITIVE_LEVELS[label.cognitive_level as keyof typeof COGNITIVE_LEVELS] ?? ''}`} color="amber" />
+                        {label?.industry && label.industry !== '공통' && (
+                          <Badge label={label.industry} color="slate" />
                         )}
-                        {label?.question_format && (
-                          <Badge label={`${label.question_format} ${QUESTION_FORMATS[label.question_format as keyof typeof QUESTION_FORMATS] ?? ''}`} color="pink" />
+                        {label?.position && label.position !== '공통' && (
+                          <Badge label={label.position} color="slate" />
                         )}
-                        {label?.complexity && (
-                          <Badge label={COMPLEXITIES[label.complexity as keyof typeof COMPLEXITIES] ?? label.complexity} color="teal" />
+                        {label?.difficulty && (
+                          <Badge label={`난이도 ${label.difficulty}`} color={DIFF_COLORS[label.difficulty] as 'amber' ?? 'slate'} />
                         )}
                       </div>
                     </td>

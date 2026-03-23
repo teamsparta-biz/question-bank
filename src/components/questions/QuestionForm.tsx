@@ -1,11 +1,9 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '../../lib/supabase'
+import { useState } from 'react'
 import McqOptionEditor from './mcq/McqOptionEditor'
-import McqLabelForm from './mcq/McqLabelForm'
-import SubjectiveLabelForm from './subjective/SubjectiveLabelForm'
+import LabelForm from './LabelForm'
 import ElementMappingGrid from './subjective/ElementMappingGrid'
 import RubricEditor from './subjective/RubricEditor'
-import type { QuestionFormData, Topic } from '../../types'
+import type { QuestionFormData } from '../../types'
 
 const EMPTY_FORM: QuestionFormData = {
   response_type: 'single_choice',
@@ -18,13 +16,11 @@ const EMPTY_FORM: QuestionFormData = {
     { label: '', is_correct: false, sort_order: 2 },
     { label: '', is_correct: false, sort_order: 3 },
   ],
-  question_type: 'mcq',
-  domain: '',
-  cognitive_level: '',
-  question_format: '',
-  topic_code: '',
-  complexity: '',
-  task_type: '',
+  category: '',
+  industry: '',
+  position: '',
+  topic_id: '',
+  difficulty: '',
   elements: [],
   rubric_title: '',
   rubric_description: '',
@@ -39,25 +35,12 @@ interface Props {
 
 export default function QuestionForm({ initialData, onSave, saving }: Props) {
   const [form, setForm] = useState<QuestionFormData>(initialData ?? EMPTY_FORM)
-  const [topics, setTopics] = useState<Topic[]>([])
-
-  useEffect(() => {
-    supabase.from('topic').select('*').order('domain').order('sort_order')
-      .then(({ data }) => setTopics((data ?? []) as Topic[]))
-  }, [])
 
   const set = <K extends keyof QuestionFormData>(key: K, value: QuestionFormData[K]) => {
     setForm(prev => ({ ...prev, [key]: value }))
   }
 
-  const handleTypeToggle = (qt: 'mcq' | 'subjective') => {
-    set('question_type', qt)
-    if (qt === 'mcq') {
-      set('response_type', 'single_choice')
-    } else {
-      set('response_type', 'text')
-    }
-  }
+  const isSubjective = form.response_type === 'text'
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -70,47 +53,31 @@ export default function QuestionForm({ initialData, onSave, saving }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* 타입 선택 */}
+      {/* 유형 선택 */}
       <div className="bg-white rounded-xl border border-slate-200 p-5">
         <h3 className="text-sm font-semibold text-slate-700 mb-3">문항 유형</h3>
         <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => handleTypeToggle('mcq')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
-              form.question_type === 'mcq'
-                ? 'bg-primary-50 border-primary-300 text-primary-700'
-                : 'border-slate-300 text-slate-500 hover:bg-slate-50'
-            }`}
-          >
-            객관식
-          </button>
-          <button
-            type="button"
-            onClick={() => handleTypeToggle('subjective')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
-              form.question_type === 'subjective'
-                ? 'bg-teal-50 border-teal-300 text-teal-700'
-                : 'border-slate-300 text-slate-500 hover:bg-slate-50'
-            }`}
-          >
-            주관식
-          </button>
-        </div>
-
-        {form.question_type === 'mcq' && (
-          <div className="mt-3">
-            <label className="text-xs font-medium text-slate-500">응답 방식</label>
-            <select
-              value={form.response_type}
-              onChange={e => set('response_type', e.target.value as QuestionFormData['response_type'])}
-              className="ml-2 text-sm border border-slate-300 rounded-lg px-3 py-1.5"
+          {[
+            { value: 'single_choice', label: '단일 선택' },
+            { value: 'multiple_choice', label: '복수 선택' },
+            { value: 'text', label: '주관식' },
+          ].map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => set('response_type', opt.value as QuestionFormData['response_type'])}
+              className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                form.response_type === opt.value
+                  ? opt.value === 'text'
+                    ? 'bg-teal-50 border-teal-300 text-teal-700'
+                    : 'bg-primary-50 border-primary-300 text-primary-700'
+                  : 'border-slate-300 text-slate-500 hover:bg-slate-50'
+              }`}
             >
-              <option value="single_choice">단일 선택</option>
-              <option value="multiple_choice">복수 선택</option>
-            </select>
-          </div>
-        )}
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* 기본 정보 */}
@@ -124,7 +91,7 @@ export default function QuestionForm({ initialData, onSave, saving }: Props) {
               value={form.title}
               onChange={e => set('title', e.target.value)}
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              placeholder={form.question_type === 'mcq' ? '문항 제목 (질문)' : '과제 시나리오 제목'}
+              placeholder={isSubjective ? '과제 시나리오 제목' : '문항 제목 (질문)'}
             />
           </div>
           <div>
@@ -134,7 +101,7 @@ export default function QuestionForm({ initialData, onSave, saving }: Props) {
               onChange={e => set('description', e.target.value)}
               rows={4}
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-y"
-              placeholder={form.question_type === 'mcq' ? '지문이나 시나리오 (선택)' : '과제 상황 설명'}
+              placeholder={isSubjective ? '과제 상황 설명' : '지문이나 시나리오 (선택)'}
             />
           </div>
           <label className="flex items-center gap-2 text-sm">
@@ -150,7 +117,7 @@ export default function QuestionForm({ initialData, onSave, saving }: Props) {
       </div>
 
       {/* MCQ: 선택지 */}
-      {form.question_type === 'mcq' && (
+      {!isSubjective && (
         <McqOptionEditor
           options={form.options}
           responseType={form.response_type}
@@ -158,35 +125,27 @@ export default function QuestionForm({ initialData, onSave, saving }: Props) {
         />
       )}
 
-      {/* 라벨링 */}
-      {form.question_type === 'mcq' ? (
-        <McqLabelForm
-          domain={form.domain}
-          cognitiveLevel={form.cognitive_level}
-          questionFormat={form.question_format}
-          topicCode={form.topic_code}
-          topics={topics}
-          onChange={(key, value) => set(key as keyof QuestionFormData, value)}
-        />
-      ) : (
-        <SubjectiveLabelForm
-          complexity={form.complexity}
-          taskType={form.task_type}
-          onChange={(key, value) => set(key as keyof QuestionFormData, value)}
-        />
-      )}
+      {/* 분류 (5축 통합) */}
+      <LabelForm
+        category={form.category}
+        industry={form.industry}
+        position={form.position}
+        topicId={form.topic_id}
+        difficulty={form.difficulty}
+        onChange={(key, value) => set(key as keyof QuestionFormData, value)}
+      />
 
       {/* 주관식: Element 매핑 */}
-      {form.question_type === 'subjective' && (
+      {isSubjective && (
         <ElementMappingGrid
-          complexity={form.complexity}
+          complexity=""
           selected={form.elements}
           onChange={els => set('elements', els)}
         />
       )}
 
       {/* 주관식: 루브릭 */}
-      {form.question_type === 'subjective' && (
+      {isSubjective && (
         <RubricEditor
           title={form.rubric_title}
           description={form.rubric_description}
