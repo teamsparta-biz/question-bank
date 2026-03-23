@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../../lib/supabase'
-import { CATEGORIES, INDUSTRIES, POSITIONS, DIFFICULTIES, COMPLEXITIES, TASK_TYPES } from '../../lib/constants'
+import { CATEGORIES, INDUSTRIES, POSITIONS, DIFFICULTIES, COMPLEXITIES } from '../../lib/constants'
 import type { Topic } from '../../types'
 
 interface Props {
@@ -11,7 +11,6 @@ interface Props {
   topicId: string
   difficulty: string
   complexity: string
-  taskType: string
   onChange: (key: string, value: string) => void
 }
 
@@ -34,7 +33,7 @@ function Select({ label, value, onChange, options }: {
   )
 }
 
-export default function LabelForm({ isSubjective, category, industry, position, topicId, difficulty, complexity, taskType, onChange }: Props) {
+export default function LabelForm({ isSubjective, category, industry, position, topicId, difficulty, complexity, onChange }: Props) {
   const [allTopics, setAllTopics] = useState<Topic[]>([])
 
   useEffect(() => {
@@ -73,7 +72,7 @@ export default function LabelForm({ isSubjective, category, industry, position, 
         </div>
       )}
 
-      {/* 주관식: 복잡도 + 과제유형 */}
+      {/* 주관식: 복잡도 */}
       {isSubjective && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
           <Select
@@ -81,12 +80,6 @@ export default function LabelForm({ isSubjective, category, industry, position, 
             value={complexity}
             onChange={v => onChange('complexity', v)}
             options={Object.entries(COMPLEXITIES).map(([k, v]) => ({ value: k, label: v }))}
-          />
-          <Select
-            label="과제 유형"
-            value={taskType}
-            onChange={v => onChange('task_type', v)}
-            options={Object.entries(TASK_TYPES).map(([k, v]) => ({ value: k, label: v }))}
           />
         </div>
       )}

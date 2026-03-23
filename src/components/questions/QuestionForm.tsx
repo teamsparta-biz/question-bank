@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ELEMENTS, ACTIVE_TIERS, type ElementTier } from '../../lib/constants'
 import McqOptionEditor from './mcq/McqOptionEditor'
 import LabelForm from './LabelForm'
 import ElementMappingGrid from './subjective/ElementMappingGrid'
@@ -39,7 +40,17 @@ export default function QuestionForm({ initialData, onSave, saving }: Props) {
   const [form, setForm] = useState<QuestionFormData>(initialData ?? EMPTY_FORM)
 
   const set = <K extends keyof QuestionFormData>(key: K, value: QuestionFormData[K]) => {
-    setForm(prev => ({ ...prev, [key]: value }))
+    setForm(prev => {
+      const next = { ...prev, [key]: value }
+      // 복잡도 변경 시 Element 자동 매핑
+      if (key === 'complexity' && typeof value === 'string' && value) {
+        const tiers = ACTIVE_TIERS[value] ?? []
+        next.elements = ELEMENTS
+          .filter(e => tiers.includes(e.tier as ElementTier))
+          .map(e => e.id)
+      }
+      return next
+    })
   }
 
   const isSubjective = form.response_type === 'text'
@@ -136,7 +147,6 @@ export default function QuestionForm({ initialData, onSave, saving }: Props) {
         topicId={form.topic_id}
         difficulty={form.difficulty}
         complexity={form.complexity}
-        taskType={form.task_type}
         onChange={(key, value) => set(key as keyof QuestionFormData, value)}
       />
 

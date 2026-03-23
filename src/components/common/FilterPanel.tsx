@@ -1,4 +1,4 @@
-import { CATEGORIES, INDUSTRIES, POSITIONS, DIFFICULTIES, COMPLEXITIES, TASK_TYPES } from '../../lib/constants'
+import { CATEGORIES, INDUSTRIES, POSITIONS, DIFFICULTIES, COMPLEXITIES } from '../../lib/constants'
 import type { QuestionFilters } from '../../types'
 
 interface Props {
@@ -95,12 +95,6 @@ export default function FilterPanel({ filters, onChange }: Props) {
               value={filters.complexity}
               onChange={v => set('complexity', v)}
               options={Object.entries(COMPLEXITIES).map(([k, v]) => ({ value: k, label: v }))}
-            />
-            <Select
-              label="과제 유형"
-              value={filters.task_type}
-              onChange={v => set('task_type', v)}
-              options={Object.entries(TASK_TYPES).map(([k, v]) => ({ value: k, label: v }))}
             />
           </div>
         )}
