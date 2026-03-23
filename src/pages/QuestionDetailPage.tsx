@@ -70,7 +70,7 @@ export default function QuestionDetailPage() {
       alert('저장 완료')
     } catch (err) {
       console.error(err)
-      alert('저장 실패')
+      alert('저장 실패: ' + (err instanceof Error ? err.message : '알 수 없는 오류'))
     } finally {
       setSaving(false)
     }
