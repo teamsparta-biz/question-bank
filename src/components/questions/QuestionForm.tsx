@@ -3,7 +3,6 @@ import { ELEMENTS, ACTIVE_TIERS, type ElementTier } from '../../lib/constants'
 import McqOptionEditor from './mcq/McqOptionEditor'
 import LabelForm from './LabelForm'
 import ElementMappingGrid from './subjective/ElementMappingGrid'
-import RubricEditor from './subjective/RubricEditor'
 import type { QuestionFormData } from '../../types'
 
 const EMPTY_FORM: QuestionFormData = {
@@ -150,24 +149,12 @@ export default function QuestionForm({ initialData, onSave, saving }: Props) {
         onChange={(key, value) => set(key as keyof QuestionFormData, value)}
       />
 
-      {/* 주관식: Element 매핑 */}
+      {/* 주관식: Element 매핑 (복잡도에 따라 자동 선택, 수동 조정 가능) */}
       {isSubjective && (
         <ElementMappingGrid
-          complexity=""
+          complexity={form.complexity}
           selected={form.elements}
           onChange={els => set('elements', els)}
-        />
-      )}
-
-      {/* 주관식: 루브릭 */}
-      {isSubjective && (
-        <RubricEditor
-          title={form.rubric_title}
-          description={form.rubric_description}
-          criteria={form.criteria}
-          onTitleChange={v => set('rubric_title', v)}
-          onDescriptionChange={v => set('rubric_description', v)}
-          onCriteriaChange={c => set('criteria', c)}
         />
       )}
 
