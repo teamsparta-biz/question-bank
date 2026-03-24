@@ -120,18 +120,30 @@ export default function PoolPrintPage() {
               )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${sortedCategories.filter(c => c !== '미분류').length + 1}, 1fr)`, gap: '16px', marginBottom: '48px' }}>
-              <div style={{ background: '#eff6ff', borderRadius: '8px', padding: '16px 20px', textAlign: 'center' }}>
-                <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '6px' }}>총 문항</div>
-                <div style={{ fontSize: '28px', fontWeight: 700, color: '#2563eb' }}>{questions.length}</div>
-              </div>
-              {sortedCategories.filter(c => c !== '미분류').map(cat => (
-                <div key={cat} style={{ background: '#f8fafc', borderRadius: '8px', padding: '16px 20px', textAlign: 'center', border: '1px solid #e2e8f0' }}>
-                  <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '6px' }}>{cat} {CAT_LABELS[cat]}</div>
-                  <div style={{ fontSize: '28px', fontWeight: 700, color: '#0f172a' }}>{byCategory[cat].length}</div>
-                </div>
-              ))}
-            </div>
+            {/* 구성 요약 테이블 */}
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '48px', fontSize: '12px' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
+                  <th style={{ textAlign: 'left', padding: '10px 16px', color: '#64748b', fontWeight: 600 }}>영역</th>
+                  <th style={{ textAlign: 'center', padding: '10px 16px', color: '#64748b', fontWeight: 600, width: '80px' }}>문항 수</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedCategories.filter(c => c !== '미분류').map(cat => (
+                  <tr key={cat} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '10px 16px' }}>
+                      <span style={{ display: 'inline-block', width: '22px', height: '22px', borderRadius: '4px', background: cat === 'P' ? '#2563eb' : cat === 'E' ? '#dc2626' : cat === 'D' ? '#16a34a' : cat === 'W' ? '#9333ea' : '#64748b', color: '#fff', textAlign: 'center', lineHeight: '22px', fontSize: '11px', fontWeight: 700, marginRight: '10px', verticalAlign: 'middle' }}>{cat}</span>
+                      {CAT_LABELS[cat]}
+                    </td>
+                    <td style={{ textAlign: 'center', padding: '10px 16px', fontWeight: 700, fontSize: '16px' }}>{byCategory[cat].length}</td>
+                  </tr>
+                ))}
+                <tr style={{ borderTop: '2px solid #e2e8f0' }}>
+                  <td style={{ padding: '10px 16px', fontWeight: 700 }}>합계</td>
+                  <td style={{ textAlign: 'center', padding: '10px 16px', fontWeight: 700, fontSize: '16px', color: '#2563eb' }}>{questions.length}</td>
+                </tr>
+              </tbody>
+            </table>
 
             <div style={{ fontSize: '10px', color: '#94a3b8', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
               생성일: {today}
