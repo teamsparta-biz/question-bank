@@ -149,33 +149,31 @@ export default function PoolPrintPage() {
                 </div>
               </div>
 
-              {byCategory[cat].map((pq) => {
+              {byCategory[cat].map((pq, pqIdx) => {
                 globalIndex++
                 const label = getLabel(pq.question)
                 const options = [...(pq.question.question_option ?? [])].sort((a, b) => a.sort_order - b.sort_order)
                 return (
-                  <div key={pq.id} style={{ padding: '0 40px 14px', pageBreakInside: 'avoid' }}>
-                    <div style={{ background: '#f8fafc', borderRadius: '8px', padding: '14px 18px', border: '1px solid #e2e8f0' }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#2563eb', flexShrink: 0 }}>Q{globalIndex}</span>
-                        <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#0f172a', flex: 1 }}>{pq.question.title}</span>
-                        {label?.difficulty && (
-                          <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '4px', background: label.difficulty === 'Lv.1' ? '#dcfce7' : label.difficulty === 'Lv.2' ? '#fef3c7' : '#fee2e2', color: label.difficulty === 'Lv.1' ? '#16a34a' : label.difficulty === 'Lv.2' ? '#d97706' : '#dc2626', fontWeight: 600 }}>{label.difficulty}</span>
-                        )}
-                      </div>
-
-                      {pq.question.description && (
-                        <p style={{ fontSize: '10.5px', color: '#475569', margin: '0 0 8px 0', padding: '8px 12px', background: '#fff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>{pq.question.description}</p>
+                  <div key={pq.id} style={{ padding: '0 40px', marginBottom: '10px', borderTop: pqIdx > 0 ? '1px solid #e2e8f0' : 'none', paddingTop: pqIdx > 0 ? '14px' : '0' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#2563eb', flexShrink: 0 }}>Q{globalIndex}</span>
+                      <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#0f172a', flex: 1 }}>{pq.question.title}</span>
+                      {label?.difficulty && (
+                        <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '4px', background: label.difficulty === 'Lv.1' ? '#dcfce7' : label.difficulty === 'Lv.2' ? '#fef3c7' : '#fee2e2', color: label.difficulty === 'Lv.1' ? '#16a34a' : label.difficulty === 'Lv.2' ? '#d97706' : '#dc2626', fontWeight: 600 }}>{label.difficulty}</span>
                       )}
+                    </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        {options.map((o, oi) => (
-                          <div key={o.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', padding: '5px 10px', borderRadius: '6px', background: o.is_correct ? '#eff6ff' : '#fff', border: o.is_correct ? '1px solid #93c5fd' : '1px solid #e2e8f0' }}>
-                            <span style={{ fontSize: '10px', fontWeight: 600, color: o.is_correct ? '#2563eb' : '#94a3b8', minWidth: '14px', flexShrink: 0 }}>{String.fromCharCode(9312 + oi)}</span>
-                            <span style={{ fontSize: '10.5px', color: o.is_correct ? '#1e40af' : '#334155', fontWeight: o.is_correct ? 600 : 400 }}>{o.label}</span>
-                          </div>
-                        ))}
-                      </div>
+                    {pq.question.description && (
+                      <p style={{ fontSize: '10.5px', color: '#475569', margin: '0 0 8px 20px', padding: '8px 12px', background: '#f8fafc', borderLeft: '3px solid #e2e8f0' }}>{pq.question.description}</p>
+                    )}
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginLeft: '20px' }}>
+                      {options.map((o, oi) => (
+                        <div key={o.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', padding: '4px 10px', background: o.is_correct ? '#eff6ff' : 'transparent', borderLeft: o.is_correct ? '3px solid #3b82f6' : '3px solid transparent' }}>
+                          <span style={{ fontSize: '10px', fontWeight: 600, color: o.is_correct ? '#2563eb' : '#94a3b8', minWidth: '14px', flexShrink: 0 }}>{String.fromCharCode(9312 + oi)}</span>
+                          <span style={{ fontSize: '10.5px', color: o.is_correct ? '#1e40af' : '#334155', fontWeight: o.is_correct ? 600 : 400 }}>{o.label}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )
