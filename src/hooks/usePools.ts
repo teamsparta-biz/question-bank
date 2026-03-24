@@ -87,3 +87,12 @@ export async function removeQuestionFromPool(poolId: string, questionId: string)
     .eq('question_id', questionId)
   if (error) throw error
 }
+
+export async function swapPoolQuestionOrder(idA: string, orderA: number, idB: string, orderB: number) {
+  const [resA, resB] = await Promise.all([
+    supabase.from('pool_question').update({ sort_order: orderB }).eq('id', idA),
+    supabase.from('pool_question').update({ sort_order: orderA }).eq('id', idB),
+  ])
+  if (resA.error) throw resA.error
+  if (resB.error) throw resB.error
+}

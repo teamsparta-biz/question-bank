@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { usePoolDetail, addQuestionToPool, removeQuestionFromPool } from '../hooks/usePools'
+import { usePoolDetail, addQuestionToPool, removeQuestionFromPool, swapPoolQuestionOrder } from '../hooks/usePools'
 import { supabase } from '../lib/supabase'
 import Badge from '../components/common/Badge'
 import { CATEGORIES } from '../lib/constants'
@@ -316,6 +316,19 @@ export default function PoolDetailPage() {
     }
   }
 
+  const handleMove = async (index: number, direction: 'up' | 'down') => {
+    const targetIdx = direction === 'up' ? index - 1 : index + 1
+    if (targetIdx < 0 || targetIdx >= questions.length) return
+    const a = questions[index]
+    const b = questions[targetIdx]
+    try {
+      await swapPoolQuestionOrder(a.id, a.sort_order, b.id, b.sort_order)
+      refetch()
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   if (loading) return <div className="p-8 text-center text-slate-400">불러오는 중...</div>
   if (!pool) return <div className="p-8 text-center text-slate-400">문항풀을 찾을 수 없습니다</div>
 
@@ -407,7 +420,19 @@ export default function PoolDetailPage() {
                 <div key={pq.id} className="px-4 py-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-start gap-3 min-w-0 flex-1">
-                      <span className="text-xs text-slate-400 w-5 pt-0.5 shrink-0">{i + 1}</span>
+                      <div className="flex flex-col items-center shrink-0 pt-0.5 gap-0.5">
+                        <button
+                          onClick={() => handleMove(i, 'up')}
+                          disabled={i === 0}
+                          className="text-[10px] text-slate-400 hover:text-slate-600 disabled:opacity-20 disabled:cursor-default leading-none"
+                        >&#9650;</button>
+                        <span className="text-xs text-slate-400 w-5 text-center">{i + 1}</span>
+                        <button
+                          onClick={() => handleMove(i, 'down')}
+                          disabled={i === questions.length - 1}
+                          className="text-[10px] text-slate-400 hover:text-slate-600 disabled:opacity-20 disabled:cursor-default leading-none"
+                        >&#9660;</button>
+                      </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           {label?.category && (
