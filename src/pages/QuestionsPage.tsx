@@ -8,13 +8,10 @@ import { CATEGORIES } from '../lib/constants'
 import type { QuestionFilters } from '../types'
 
 const INITIAL_FILTERS: QuestionFilters = {
-  question_type: '',
   category: '',
   industry: '',
   position: '',
   difficulty: '',
-  complexity: '',
-  task_type: '',
   is_active: '',
   search: '',
 }
@@ -69,13 +66,12 @@ export default function QuestionsPage() {
             <tbody className="divide-y divide-slate-100">
               {questions.map(q => {
                 const label = q.question_label
-                const isSubjective = q.response_type === 'text'
                 return (
                   <tr key={q.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3">
                       <Badge
-                        label={isSubjective ? '주관식' : '객관식'}
-                        color={isSubjective ? 'teal' : 'blue'}
+                        label={q.response_type === 'single_choice' ? '단일' : '복수'}
+                        color="blue"
                       />
                     </td>
                     <td className="px-4 py-3">
@@ -89,14 +85,8 @@ export default function QuestionsPage() {
                         {label?.category && (
                           <Badge label={`${label.category} ${CATEGORIES[label.category as keyof typeof CATEGORIES] ?? ''}`} color={CAT_COLORS[label.category] as 'blue' ?? 'slate'} />
                         )}
-                        {label?.industry && label.industry !== '공통' && (
-                          <Badge label={label.industry} color="slate" />
-                        )}
-                        {label?.position && label.position !== '공통' && (
-                          <Badge label={label.position} color="slate" />
-                        )}
                         {label?.difficulty && (
-                          <Badge label={`난이도 ${label.difficulty}`} color={DIFF_COLORS[label.difficulty] as 'amber' ?? 'slate'} />
+                          <Badge label={`${label.difficulty}`} color={DIFF_COLORS[label.difficulty] as 'amber' ?? 'slate'} />
                         )}
                       </div>
                     </td>

@@ -2,7 +2,7 @@
 
 export interface Question {
   id: string
-  response_type: 'single_choice' | 'multiple_choice' | 'text'
+  response_type: 'single_choice' | 'multiple_choice'
   title: string
   description: string | null
   current_version: number
@@ -31,25 +31,6 @@ export interface QuestionOption {
   created_at: string
 }
 
-export interface Rubric {
-  id: string
-  question_id: string
-  title: string
-  description: string | null
-  created_at: string
-  updated_at: string
-}
-
-export interface RubricCriterion {
-  id: string
-  rubric_id: string
-  name: string
-  description: string | null
-  max_score: number
-  sort_order: number
-  created_at: string
-}
-
 export interface Topic {
   id: string
   code: string
@@ -71,17 +52,8 @@ export interface QuestionLabel {
   position: string | null
   topic_id: string | null
   difficulty: string | null
-  complexity: string | null
-  task_type: string | null
   created_at: string
   updated_at: string
-}
-
-export interface ElementMapping {
-  id: string
-  question_id: string
-  element_id: string
-  is_active: boolean
 }
 
 export interface QuestionPool {
@@ -110,8 +82,6 @@ export interface QuestionWithLabel extends Question {
 export interface QuestionDetail extends Question {
   question_label: QuestionLabel | null
   question_option: QuestionOption[]
-  rubric: (Rubric & { rubric_criterion: RubricCriterion[] }) | null
-  element_mapping: ElementMapping[]
   question_version: QuestionVersion[]
 }
 
@@ -122,34 +92,22 @@ export interface QuestionFormData {
   title: string
   description: string
   is_active: boolean
-  // MCQ
   options: { label: string; is_correct: boolean; sort_order: number }[]
-  // 공통 분류
+  // 분류
+  category: string
   industry: string
   position: string
-  difficulty: string
-  // 객관식 전용
-  category: string
   topic_id: string
-  // 주관식 전용
-  complexity: string
-  task_type: string
-  elements: string[]
-  rubric_title: string
-  rubric_description: string
-  criteria: { name: string; description: string; max_score: number; sort_order: number }[]
+  difficulty: string
 }
 
 // ---- 필터 ----
 
 export interface QuestionFilters {
-  question_type: string  // 'mcq' | 'subjective' | ''
   category: string
   industry: string
   position: string
   difficulty: string
-  complexity: string
-  task_type: string
   is_active: string
   search: string
 }

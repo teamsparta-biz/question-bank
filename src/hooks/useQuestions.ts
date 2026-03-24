@@ -32,11 +32,6 @@ export function useQuestions(filters: QuestionFilters, page: number) {
     if (filters.is_active && filters.is_active !== 'all') {
       query = query.eq('is_active', filters.is_active === 'true')
     }
-    if (filters.question_type === 'mcq') {
-      query = query.in('response_type', ['single_choice', 'multiple_choice'])
-    } else if (filters.question_type === 'subjective') {
-      query = query.eq('response_type', 'text')
-    }
     if (filters.category) {
       query = query.eq('question_label.category', filters.category)
     }
@@ -48,12 +43,6 @@ export function useQuestions(filters: QuestionFilters, page: number) {
     }
     if (filters.difficulty) {
       query = query.eq('question_label.difficulty', filters.difficulty)
-    }
-    if (filters.complexity) {
-      query = query.eq('question_label.complexity', filters.complexity)
-    }
-    if (filters.task_type) {
-      query = query.eq('question_label.task_type', filters.task_type)
     }
 
     const { data, count, error } = await query
@@ -86,8 +75,6 @@ export function useQuestionDetail(id: string | undefined) {
         *,
         question_label(*),
         question_option(*),
-        rubric(*, rubric_criterion(*)),
-        element_mapping(*),
         question_version(*)
       `)
       .eq('id', id)
@@ -97,7 +84,6 @@ export function useQuestionDetail(id: string | undefined) {
       console.error('Failed to fetch question detail:', error)
     } else {
       const q = data as Record<string, unknown>
-      if (Array.isArray(q.rubric)) q.rubric = q.rubric[0] ?? null
       if (Array.isArray(q.question_label)) q.question_label = q.question_label[0] ?? null
       setQuestion(q as unknown as QuestionDetail)
     }
@@ -114,21 +100,13 @@ export async function createQuestion(data: {
   title: string
   description: string
   is_active: boolean
-  options?: { label: string; is_correct: boolean; sort_order: number }[]
+  options: { label: string; is_correct: boolean; sort_order: number }[]
   label: {
     category?: string
     industry?: string
     position?: string
     topic_id?: string
     difficulty?: string
-    complexity?: string
-    task_type?: string
-  }
-  elements?: string[]
-  rubric?: {
-    title: string
-    description: string
-    criteria: { name: string; description: string; max_score: number; sort_order: number }[]
   }
 }) {
   // 1. question 생성
@@ -153,8 +131,6 @@ export async function createQuestion(data: {
         position: data.label.position || null,
         topic_id: data.label.topic_id || null,
         difficulty: data.label.difficulty || null,
-        complexity: data.label.complexity || null,
-        task_type: data.label.task_type || null,
       }),
       '라벨 생성'
     )
@@ -167,12 +143,12 @@ export async function createQuestion(data: {
         title: data.title,
         description: data.description || null,
         response_type: data.response_type,
-        snapshot: { options: data.options, label: data.label, elements: data.elements, rubric: data.rubric },
+        snapshot: { options: data.options, label: data.label },
       }),
       '버전 생성'
     )
 
-    // 4. options (MCQ)
+    // 4. options
     if (data.options && data.options.length > 0) {
       check(
         await supabase.from('question_option').insert(
@@ -182,39 +158,8 @@ export async function createQuestion(data: {
       )
     }
 
-    // 5. rubric (주관식)
-    if (data.rubric) {
-      const r = check(
-        await supabase.from('rubric').insert({
-          question_id: questionId,
-          title: data.rubric.title,
-          description: data.rubric.description || null,
-        }).select().single(),
-        '루브릭 생성'
-      )
-      if (data.rubric.criteria.length > 0) {
-        check(
-          await supabase.from('rubric_criterion').insert(
-            data.rubric.criteria.map(c => ({ ...c, rubric_id: r.id }))
-          ),
-          '루브릭 기준 생성'
-        )
-      }
-    }
-
-    // 6. elements (주관식)
-    if (data.elements && data.elements.length > 0) {
-      check(
-        await supabase.from('element_mapping').insert(
-          data.elements.map(eid => ({ question_id: questionId, element_id: eid, is_active: true }))
-        ),
-        'Element 매핑 생성'
-      )
-    }
-
     return questionId
   } catch (err) {
-    // 실패 시 생성된 문항 삭제 (CASCADE로 하위 데이터 정리됨)
     await supabase.from('question').delete().eq('id', questionId)
     throw err
   }
@@ -238,14 +183,14 @@ export async function updateQuestion(
   }).eq('id', questionId)
   if (qResult.error) errors.push('문항 업데이트: ' + qResult.error.message)
 
-  // 2. version (새 버전은 항상 추가, 실패해도 계속)
+  // 2. version
   const vResult = await supabase.from('question_version').insert({
     question_id: questionId,
     version: newVersion,
     title: data.title,
     description: data.description || null,
     response_type: data.response_type,
-    snapshot: { options: data.options, label: data.label, elements: data.elements, rubric: data.rubric },
+    snapshot: { options: data.options, label: data.label },
   })
   if (vResult.error) errors.push('버전 생성: ' + vResult.error.message)
 
@@ -259,8 +204,6 @@ export async function updateQuestion(
     position: data.label.position || null,
     topic_id: data.label.topic_id || null,
     difficulty: data.label.difficulty || null,
-    complexity: data.label.complexity || null,
-    task_type: data.label.task_type || null,
   }
 
   if (existingLabel) {
@@ -282,18 +225,6 @@ export async function updateQuestion(
     if (insOpt.error) errors.push('선택지 생성: ' + insOpt.error.message)
   }
 
-  // 5. elements — 삭제 후 재삽입
-  const delEl = await supabase.from('element_mapping').delete().eq('question_id', questionId)
-  if (delEl.error) errors.push('Element 삭제: ' + delEl.error.message)
-
-  if (data.elements && data.elements.length > 0) {
-    const insEl = await supabase.from('element_mapping').insert(
-      data.elements.map(eid => ({ question_id: questionId, element_id: eid, is_active: true }))
-    )
-    if (insEl.error) errors.push('Element 생성: ' + insEl.error.message)
-  }
-
-  // 에러가 있으면 모아서 throw
   if (errors.length > 0) {
     throw new Error('일부 항목 저장 실패:\n' + errors.join('\n'))
   }

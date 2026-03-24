@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { COMPLEXITIES } from '../lib/constants'
-import type { QuestionPool, QuestionOption, QuestionLabel, ElementMapping } from '../types'
+import type { QuestionPool, QuestionOption, QuestionLabel } from '../types'
 
 interface PoolQuestionJoined {
   id: string
@@ -15,7 +14,6 @@ interface PoolQuestionJoined {
     description: string | null
     question_label: QuestionLabel[]
     question_option: QuestionOption[]
-    element_mapping: ElementMapping[]
   }
 }
 
@@ -37,7 +35,7 @@ export default function PoolPrintPage() {
         supabase.from('question_pool').select('*').eq('id', id).single(),
         supabase
           .from('pool_question')
-          .select('*, question(*, question_label(*), question_option(*), element_mapping(*))')
+          .select('*, question(*, question_label(*), question_option(*))')
           .eq('pool_id', id)
           .order('sort_order'),
       ])
@@ -72,13 +70,9 @@ export default function PoolPrintPage() {
   if (loading) return <div className="p-8 text-center text-slate-400">불러오는 중...</div>
   if (!pool) return <div className="p-8 text-center text-slate-400">문항풀을 찾을 수 없습니다</div>
 
-  // 분류
-  const mcqQuestions = questions.filter(pq => pq.question.response_type !== 'text')
-  const subjQuestions = questions.filter(pq => pq.question.response_type === 'text')
-
   // 카테고리별 그룹
   const byCategory: Record<string, PoolQuestionJoined[]> = {}
-  mcqQuestions.forEach(pq => {
+  questions.forEach(pq => {
     const label = pq.question.question_label?.[0]
     const cat = label?.category ?? '미분류'
     if (!byCategory[cat]) byCategory[cat] = []
@@ -94,7 +88,6 @@ export default function PoolPrintPage() {
 
   return (
     <div className="min-h-screen bg-slate-100">
-      {/* 상단 컨트롤 바 (인쇄 안됨) */}
       <div className="sticky top-0 z-20 bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between print:hidden">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(`/pools/${id}`)} className="text-slate-400 hover:text-slate-600">&larr;</button>
@@ -109,7 +102,6 @@ export default function PoolPrintPage() {
         </button>
       </div>
 
-      {/* PDF 영역 */}
       <div className="max-w-[210mm] mx-auto my-6 print:my-0">
         <div ref={printRef} style={{ fontFamily: "'Pretendard', 'Noto Sans KR', sans-serif", color: '#1e293b', fontSize: '11px', lineHeight: '1.6' }}>
 
@@ -124,55 +116,23 @@ export default function PoolPrintPage() {
 
             <div style={{ display: 'flex', gap: '24px', marginBottom: '40px' }}>
               <div style={{ background: '#f1f5f9', borderRadius: '8px', padding: '16px 20px', flex: 1 }}>
-                <div style={{ fontSize: '10px', color: '#94a3b8', marginBottom: '4px' }}>객관식</div>
-                <div style={{ fontSize: '24px', fontWeight: 700, color: '#2563eb' }}>{mcqQuestions.length}<span style={{ fontSize: '12px', color: '#64748b', marginLeft: '2px' }}>문항</span></div>
-              </div>
-              <div style={{ background: '#f1f5f9', borderRadius: '8px', padding: '16px 20px', flex: 1 }}>
-                <div style={{ fontSize: '10px', color: '#94a3b8', marginBottom: '4px' }}>주관식</div>
-                <div style={{ fontSize: '24px', fontWeight: 700, color: '#0d9488' }}>{subjQuestions.length}<span style={{ fontSize: '12px', color: '#64748b', marginLeft: '2px' }}>문항</span></div>
-              </div>
-              <div style={{ background: '#f1f5f9', borderRadius: '8px', padding: '16px 20px', flex: 1 }}>
                 <div style={{ fontSize: '10px', color: '#94a3b8', marginBottom: '4px' }}>총 문항</div>
-                <div style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a' }}>{questions.length}<span style={{ fontSize: '12px', color: '#64748b', marginLeft: '2px' }}>문항</span></div>
+                <div style={{ fontSize: '24px', fontWeight: 700, color: '#2563eb' }}>{questions.length}<span style={{ fontSize: '12px', color: '#64748b', marginLeft: '2px' }}>문항</span></div>
               </div>
+              {sortedCategories.filter(c => c !== '미분류').map(cat => (
+                <div key={cat} style={{ background: '#f1f5f9', borderRadius: '8px', padding: '16px 20px', flex: 1 }}>
+                  <div style={{ fontSize: '10px', color: '#94a3b8', marginBottom: '4px' }}>{cat} {CAT_LABELS[cat]}</div>
+                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a' }}>{byCategory[cat].length}<span style={{ fontSize: '12px', color: '#64748b', marginLeft: '2px' }}>문항</span></div>
+                </div>
+              ))}
             </div>
-
-            {/* 구성 요약 */}
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
-              <thead>
-                <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-                  <th style={{ textAlign: 'left', padding: '8px 12px', color: '#64748b', fontWeight: 600 }}>구분</th>
-                  <th style={{ textAlign: 'center', padding: '8px 12px', color: '#64748b', fontWeight: 600 }}>문항 수</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedCategories.map(cat => (
-                  <tr key={cat} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '8px 12px' }}>
-                      <span style={{ display: 'inline-block', width: '20px', height: '20px', borderRadius: '4px', background: cat === 'P' ? '#dbeafe' : cat === 'E' ? '#fee2e2' : cat === 'D' ? '#dcfce7' : cat === 'W' ? '#f3e8ff' : '#f1f5f9', color: cat === 'P' ? '#2563eb' : cat === 'E' ? '#dc2626' : cat === 'D' ? '#16a34a' : cat === 'W' ? '#9333ea' : '#64748b', textAlign: 'center', lineHeight: '20px', fontSize: '10px', fontWeight: 700, marginRight: '8px', verticalAlign: 'middle' }}>{cat}</span>
-                      {CAT_LABELS[cat] ?? cat}
-                    </td>
-                    <td style={{ textAlign: 'center', padding: '8px 12px', fontWeight: 600 }}>{byCategory[cat].length}</td>
-                  </tr>
-                ))}
-                {subjQuestions.length > 0 && (
-                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '8px 12px' }}>
-                      <span style={{ display: 'inline-block', width: '20px', height: '20px', borderRadius: '4px', background: '#ccfbf1', color: '#0d9488', textAlign: 'center', lineHeight: '20px', fontSize: '10px', fontWeight: 700, marginRight: '8px', verticalAlign: 'middle' }}>S</span>
-                      주관식
-                    </td>
-                    <td style={{ textAlign: 'center', padding: '8px 12px', fontWeight: 600 }}>{subjQuestions.length}</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
 
             <div style={{ marginTop: 'auto', paddingTop: '40px', fontSize: '10px', color: '#94a3b8', borderTop: '1px solid #e2e8f0' }}>
               생성일: {today}
             </div>
           </div>
 
-          {/* 객관식 — 카테고리별 */}
+          {/* 카테고리별 문항 */}
           {sortedCategories.map(cat => (
             <div key={cat} style={{ pageBreakBefore: 'always' }}>
               <div style={{ padding: '24px 40px 0' }}>
@@ -190,29 +150,18 @@ export default function PoolPrintPage() {
                 return (
                   <div key={pq.id} style={{ padding: '0 40px 20px', pageBreakInside: 'avoid' }}>
                     <div style={{ background: '#f8fafc', borderRadius: '8px', padding: '16px 20px', border: '1px solid #e2e8f0' }}>
-                      {/* 문항 헤더 */}
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '10px' }}>
                         <span style={{ fontSize: '13px', fontWeight: 700, color: '#2563eb' }}>Q{globalIndex}</span>
                         <span style={{ fontSize: '12px', fontWeight: 600, color: '#0f172a', flex: 1 }}>{pq.question.title}</span>
-                        <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
-                          {label?.difficulty && (
-                            <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '4px', background: label.difficulty === 'Lv.1' ? '#dcfce7' : label.difficulty === 'Lv.2' ? '#fef3c7' : '#fee2e2', color: label.difficulty === 'Lv.1' ? '#16a34a' : label.difficulty === 'Lv.2' ? '#d97706' : '#dc2626', fontWeight: 600 }}>{label.difficulty}</span>
-                          )}
-                          {label?.industry && label.industry !== '공통' && (
-                            <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '4px', background: '#f1f5f9', color: '#64748b' }}>{label.industry}</span>
-                          )}
-                          {label?.position && label.position !== '공통' && (
-                            <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '4px', background: '#f1f5f9', color: '#64748b' }}>{label.position}</span>
-                          )}
-                        </div>
+                        {label?.difficulty && (
+                          <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '4px', background: label.difficulty === 'Lv.1' ? '#dcfce7' : label.difficulty === 'Lv.2' ? '#fef3c7' : '#fee2e2', color: label.difficulty === 'Lv.1' ? '#16a34a' : label.difficulty === 'Lv.2' ? '#d97706' : '#dc2626', fontWeight: 600 }}>{label.difficulty}</span>
+                        )}
                       </div>
 
-                      {/* 지문 */}
                       {pq.question.description && (
                         <p style={{ fontSize: '11px', color: '#475569', margin: '0 0 10px 0', padding: '8px 12px', background: '#fff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>{pq.question.description}</p>
                       )}
 
-                      {/* 선택지 */}
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
                         {options.map((o, oi) => (
                           <div key={o.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', padding: '6px 10px', borderRadius: '6px', background: o.is_correct ? '#eff6ff' : '#fff', border: o.is_correct ? '1px solid #93c5fd' : '1px solid #e2e8f0' }}>
@@ -228,60 +177,8 @@ export default function PoolPrintPage() {
             </div>
           ))}
 
-          {/* 주관식 */}
-          {subjQuestions.length > 0 && (
-            <div style={{ pageBreakBefore: 'always' }}>
-              <div style={{ padding: '24px 40px 0' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', paddingBottom: '12px', borderBottom: '2px solid #e2e8f0' }}>
-                  <span style={{ display: 'inline-block', width: '28px', height: '28px', borderRadius: '6px', background: '#0d9488', color: '#fff', textAlign: 'center', lineHeight: '28px', fontSize: '14px', fontWeight: 700 }}>S</span>
-                  <h2 style={{ fontSize: '16px', fontWeight: 700, margin: 0 }}>주관식</h2>
-                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>{subjQuestions.length}문항</span>
-                </div>
-              </div>
-
-              {subjQuestions.map((pq) => {
-                globalIndex++
-                const label = pq.question.question_label?.[0]
-                const elements = (pq.question.element_mapping ?? []).filter(e => e.is_active)
-                return (
-                  <div key={pq.id} style={{ padding: '0 40px 20px', pageBreakInside: 'avoid' }}>
-                    <div style={{ background: '#f0fdfa', borderRadius: '8px', padding: '16px 20px', border: '1px solid #ccfbf1' }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '10px' }}>
-                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#0d9488' }}>Q{globalIndex}</span>
-                        <span style={{ fontSize: '12px', fontWeight: 600, color: '#0f172a', flex: 1 }}>{pq.question.title}</span>
-                        <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
-                          {label?.complexity && (
-                            <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '4px', background: '#f3e8ff', color: '#9333ea', fontWeight: 600 }}>
-                              {COMPLEXITIES[label.complexity as keyof typeof COMPLEXITIES] ?? label.complexity}
-                            </span>
-                          )}
-                          {label?.difficulty && (
-                            <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '4px', background: label.difficulty === 'Lv.1' ? '#dcfce7' : label.difficulty === 'Lv.2' ? '#fef3c7' : '#fee2e2', color: label.difficulty === 'Lv.1' ? '#16a34a' : label.difficulty === 'Lv.2' ? '#d97706' : '#dc2626', fontWeight: 600 }}>{label.difficulty}</span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* 시나리오 */}
-                      {pq.question.description && (
-                        <div style={{ fontSize: '11px', color: '#334155', padding: '12px 16px', background: '#fff', borderRadius: '6px', border: '1px solid #e2e8f0', marginBottom: '10px', whiteSpace: 'pre-wrap' }}>{pq.question.description}</div>
-                      )}
-
-                      {/* Element 매핑 */}
-                      {elements.length > 0 && (
-                        <div style={{ fontSize: '10px', color: '#64748b' }}>
-                          <span style={{ fontWeight: 600 }}>활성 Element ({elements.length}개):</span>{' '}
-                          {elements.map(e => e.element_id).join(', ')}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
           {/* 정답표 */}
-          {mcqQuestions.length > 0 && (
+          {questions.length > 0 && (
             <div style={{ pageBreakBefore: 'always', padding: '24px 40px' }}>
               <h2 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px', paddingBottom: '12px', borderBottom: '2px solid #e2e8f0' }}>정답표</h2>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
@@ -296,7 +193,7 @@ export default function PoolPrintPage() {
                 <tbody>
                   {(() => {
                     let ansIdx = 0
-                    return mcqQuestions.map((pq) => {
+                    return questions.map((pq) => {
                       ansIdx++
                       const label = pq.question.question_label?.[0]
                       const options = [...(pq.question.question_option ?? [])].sort((a, b) => a.sort_order - b.sort_order)

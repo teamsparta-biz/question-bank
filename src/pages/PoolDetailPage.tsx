@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { usePoolDetail, addQuestionToPool, removeQuestionFromPool } from '../hooks/usePools'
 import { supabase } from '../lib/supabase'
 import Badge from '../components/common/Badge'
-import { CATEGORIES, COMPLEXITIES } from '../lib/constants'
+import { CATEGORIES } from '../lib/constants'
 import type { QuestionWithLabel, QuestionLabel, QuestionOption } from '../types'
 
 const CAT_COLORS: Record<string, string> = { P: 'blue', E: 'red', D: 'green', W: 'purple' }
@@ -14,13 +14,12 @@ function getLabel(q: QuestionWithLabel | undefined): QuestionLabel | null {
   return Array.isArray(q.question_label) ? q.question_label[0] ?? null : q.question_label
 }
 
-// ---- 퍼널 단계 정의 ----
+// ---- 퍼널 단계 정의 (객관식만) ----
 const FUNNEL_STEPS = [
-  { key: 'P', label: 'P 프롬프트 리터러시', count: 5, type: 'mcq' as const },
-  { key: 'E', label: 'E 윤리/보안', count: 5, type: 'mcq' as const },
-  { key: 'D', label: 'D 데이터 리터러시', count: 5, type: 'mcq' as const },
-  { key: 'W', label: 'W 워크플로우 설계', count: 5, type: 'mcq' as const },
-  { key: 'subjective', label: '주관식', count: 2, type: 'subjective' as const },
+  { key: 'P', label: 'P 프롬프트 리터러시', count: 5 },
+  { key: 'E', label: 'E 윤리/보안', count: 5 },
+  { key: 'D', label: 'D 데이터 리터러시', count: 5 },
+  { key: 'W', label: 'W 워크플로우 설계', count: 5 },
 ]
 
 // Fisher-Yates 셔플 후 n개 추출
@@ -43,7 +42,7 @@ function QuestionPicker({
 }) {
   const [step, setStep] = useState(0)
   const [allQuestions, setAllQuestions] = useState<(QuestionWithLabel & { pool_count: number; question_option?: QuestionOption[] })[]>([])
-  const [selected, setSelected] = useState<Record<string, string[]>>({ P: [], E: [], D: [], W: [], subjective: [] })
+  const [selected, setSelected] = useState<Record<string, string[]>>({ P: [], E: [], D: [], W: [] })
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
 
@@ -65,20 +64,16 @@ function QuestionPicker({
     })()
   }, [])
 
-  // 랜덤 자동 구성: 각 카테고리별 랜덤 5개 + 주관식 랜덤 2개
+  // 랜덤 자동 구성: 각 카테고리별 랜덤 5개
   const autoRandom = () => {
     const available = allQuestions.filter(q => !existingIds.has(q.id))
-    const next: Record<string, string[]> = { P: [], E: [], D: [], W: [], subjective: [] }
+    const next: Record<string, string[]> = { P: [], E: [], D: [], W: [] }
 
     for (const s of FUNNEL_STEPS) {
       const pool = available.filter(q => {
         const label = getLabel(q)
-        if (s.type === 'mcq') {
-          return q.response_type !== 'text' && label?.category === s.key
-        }
-        return q.response_type === 'text'
+        return label?.category === s.key
       })
-      // 이미 다른 단계에서 선택된 ID 제외
       const usedIds = new Set(Object.values(next).flat())
       const eligible = pool.filter(q => !usedIds.has(q.id))
       next[s.key] = pickRandom(eligible, s.count).map(q => q.id)
@@ -94,17 +89,10 @@ function QuestionPicker({
   const filtered = useMemo(() => {
     return allQuestions.filter(q => {
       if (existingIds.has(q.id)) return false
-      // 이미 다른 단계에서 선택된 것 제외
       const allSelected = Object.values(selected).flat()
       if (allSelected.includes(q.id) && !currentSelected.includes(q.id)) return false
-
       const label = getLabel(q)
-      if (currentStep.type === 'mcq') {
-        if (q.response_type === 'text') return false
-        if (label?.category !== currentStep.key) return false
-      } else {
-        if (q.response_type !== 'text') return false
-      }
+      if (label?.category !== currentStep.key) return false
       if (search && !q.title.toLowerCase().includes(search.toLowerCase())) return false
       return true
     })
@@ -116,7 +104,7 @@ function QuestionPicker({
     if (cur.includes(id)) {
       setSelected({ ...selected, [key]: cur.filter(x => x !== id) })
     } else {
-      if (currentStep.count > 0 && cur.length >= currentStep.count) return
+      if (cur.length >= currentStep.count) return
       setSelected({ ...selected, [key]: [...cur, id] })
     }
   }
@@ -153,7 +141,7 @@ function QuestionPicker({
               }`}
             >
               {isDone && !isActive && <span>&#10003;</span>}
-              {s.type === 'mcq' ? s.key : '주관식'}
+              {s.key}
               {cnt > 0 && <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px]">{cnt}</span>}
               {isActive && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 rounded-t" />}
             </button>
@@ -162,13 +150,12 @@ function QuestionPicker({
       </div>
 
       <div className="p-4">
-        {/* 현재 단계 안내 */}
         <div className="flex items-center justify-between mb-3">
           <div>
             <h4 className="text-sm font-semibold text-slate-700">{currentStep.label}</h4>
             <p className="text-xs text-slate-400">
-              {currentSelected.length}{currentStep.count > 0 ? `/${currentStep.count}` : ''}개 선택
-              {currentStep.count > 0 && currentSelected.length >= currentStep.count && ' (완료)'}
+              {currentSelected.length}/{currentStep.count}개 선택
+              {currentSelected.length >= currentStep.count && ' (완료)'}
             </p>
           </div>
           <input
@@ -180,7 +167,6 @@ function QuestionPicker({
           />
         </div>
 
-        {/* 문항 목록 */}
         <div className="max-h-72 overflow-y-auto space-y-1.5">
           {filtered.length === 0 ? (
             <p className="text-xs text-slate-400 text-center py-4">해당 조건의 문항이 없습니다</p>
@@ -188,7 +174,7 @@ function QuestionPicker({
             filtered.map(q => {
               const label = getLabel(q)
               const isChecked = currentSelected.includes(q.id)
-              const isFull = currentStep.count > 0 && currentSelected.length >= currentStep.count && !isChecked
+              const isFull = currentSelected.length >= currentStep.count && !isChecked
               return (
                 <div
                   key={q.id}
@@ -211,15 +197,6 @@ function QuestionPicker({
                         {label?.difficulty && (
                           <Badge label={label.difficulty} color={DIFF_COLORS[label.difficulty] as 'amber' ?? 'slate'} />
                         )}
-                        {label?.industry && label.industry !== '공통' && (
-                          <Badge label={label.industry} color="slate" />
-                        )}
-                        {label?.position && label.position !== '공통' && (
-                          <Badge label={label.position} color="slate" />
-                        )}
-                        {label?.complexity && (
-                          <Badge label={COMPLEXITIES[label.complexity as keyof typeof COMPLEXITIES] ?? label.complexity} color="purple" />
-                        )}
                         <span className="text-[10px] text-slate-400">
                           풀 {q.pool_count}회 &#183; {new Date(q.updated_at).toLocaleDateString('ko-KR')}
                         </span>
@@ -237,7 +214,6 @@ function QuestionPicker({
           )}
         </div>
 
-        {/* 하단 버튼 */}
         <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-200">
           <div className="text-xs text-slate-500">총 {totalSelected}개 선택됨</div>
           <div className="flex gap-2">
@@ -268,19 +244,16 @@ function QuestionPicker({
 }
 
 // ---- 문항 상세 표시 (접기/펼치기) ----
-function QuestionContent({ questionId, responseType }: { questionId: string; responseType: string }) {
+function QuestionContent({ questionId }: { questionId: string }) {
   const [options, setOptions] = useState<QuestionOption[] | null>(null)
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    if (responseType === 'text') { setLoaded(true); return }
     supabase.from('question_option').select('*').eq('question_id', questionId).order('sort_order')
       .then(({ data }) => { setOptions((data ?? []) as QuestionOption[]); setLoaded(true) })
-  }, [questionId, responseType])
+  }, [questionId])
 
   if (!loaded) return <div className="text-xs text-slate-400">불러오는 중...</div>
-
-  if (responseType === 'text') return null
 
   return (
     <div className="mt-2 space-y-1">
@@ -349,10 +322,9 @@ export default function PoolDetailPage() {
   const existingIds = new Set(questions.map(pq => pq.question_id))
 
   // 통계
-  const stats = { mcq: 0, subjective: 0, categories: {} as Record<string, number>, difficulties: {} as Record<string, number> }
+  const stats = { categories: {} as Record<string, number>, difficulties: {} as Record<string, number> }
   questions.forEach(pq => {
     const label = getLabel(pq.question)
-    if (pq.question?.response_type === 'text') stats.subjective++; else stats.mcq++
     if (label?.category) stats.categories[label.category] = (stats.categories[label.category] || 0) + 1
     if (label?.difficulty) stats.difficulties[label.difficulty] = (stats.difficulties[label.difficulty] || 0) + 1
   })
@@ -371,8 +343,6 @@ export default function PoolDetailPage() {
       <div className="bg-white rounded-xl border border-slate-200 p-4 mb-4">
         <div className="flex flex-wrap gap-4 text-sm">
           <div><span className="text-slate-500">총:</span><span className="ml-1 font-semibold">{questions.length}</span></div>
-          <div><span className="text-slate-500">객관식:</span><span className="ml-1 font-semibold">{stats.mcq}</span></div>
-          <div><span className="text-slate-500">주관식:</span><span className="ml-1 font-semibold">{stats.subjective}</span></div>
           {Object.entries(stats.categories).sort().map(([d, c]) => (
             <div key={d}>
               <Badge label={`${d} ${CATEGORIES[d as keyof typeof CATEGORIES] ?? d}`} color={CAT_COLORS[d] as 'blue' ?? 'slate'} />
@@ -432,7 +402,6 @@ export default function PoolDetailPage() {
           <div className="divide-y divide-slate-100">
             {questions.map((pq, i) => {
               const label = getLabel(pq.question)
-              const isSubjective = pq.question?.response_type === 'text'
               const isExpanded = expanded.has(pq.question_id)
               return (
                 <div key={pq.id} className="px-4 py-3">
@@ -441,18 +410,12 @@ export default function PoolDetailPage() {
                       <span className="text-xs text-slate-400 w-5 pt-0.5 shrink-0">{i + 1}</span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <Badge label={isSubjective ? '주관식' : '객관식'} color={isSubjective ? 'teal' : 'blue'} />
                           {label?.category && (
                             <Badge label={`${label.category}`} color={CAT_COLORS[label.category] as 'blue' ?? 'slate'} />
                           )}
                           {label?.difficulty && (
                             <Badge label={label.difficulty} color={DIFF_COLORS[label.difficulty] as 'amber' ?? 'slate'} />
                           )}
-                          {label?.complexity && (
-                            <Badge label={COMPLEXITIES[label.complexity as keyof typeof COMPLEXITIES] ?? label.complexity} color="purple" />
-                          )}
-                          {label?.industry && label.industry !== '공통' && <Badge label={label.industry} color="slate" />}
-                          {label?.position && label.position !== '공통' && <Badge label={label.position} color="slate" />}
                         </div>
                         <Link
                           to={`/questions/${pq.question_id}`}
@@ -466,9 +429,8 @@ export default function PoolDetailPage() {
                           </p>
                         )}
 
-                        {/* 펼쳐진 상태: 선택지/내용 표시 */}
                         {isExpanded && (
-                          <QuestionContent questionId={pq.question_id} responseType={pq.question?.response_type ?? ''} />
+                          <QuestionContent questionId={pq.question_id} />
                         )}
 
                         <button

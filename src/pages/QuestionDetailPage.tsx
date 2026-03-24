@@ -26,45 +26,28 @@ export default function QuestionDetailPage() {
       .sort((a, b) => a.sort_order - b.sort_order)
       .map(o => ({ label: o.label, is_correct: o.is_correct, sort_order: o.sort_order })),
     category: label?.category ?? '',
-    industry: label?.industry ?? '',
-    position: label?.position ?? '',
+    industry: label?.industry ?? '공통',
+    position: label?.position ?? '공통',
     topic_id: label?.topic_id ?? '',
     difficulty: label?.difficulty ?? '',
-    complexity: label?.complexity ?? '',
-    task_type: label?.task_type ?? '',
-    elements: (question.element_mapping ?? []).filter(e => e.is_active).map(e => e.element_id),
-    rubric_title: question.rubric?.title ?? '',
-    rubric_description: question.rubric?.description ?? '',
-    criteria: (question.rubric?.rubric_criterion ?? [])
-      .sort((a, b) => a.sort_order - b.sort_order)
-      .map(c => ({ name: c.name, description: c.description ?? '', max_score: c.max_score, sort_order: c.sort_order })),
   }
 
   const handleSave = async (data: QuestionFormData) => {
     setSaving(true)
     try {
-      const isSubjective = data.response_type === 'text'
       await updateQuestion(question.id, question.current_version, {
         response_type: data.response_type,
         title: data.title,
         description: data.description,
         is_active: data.is_active,
-        options: !isSubjective ? data.options : undefined,
+        options: data.options,
         label: {
           category: data.category || undefined,
-          industry: data.industry || undefined,
-          position: data.position || undefined,
+          industry: '공통',
+          position: '공통',
           topic_id: data.topic_id || undefined,
           difficulty: data.difficulty || undefined,
-          complexity: data.complexity || undefined,
-          task_type: data.task_type || undefined,
         },
-        elements: isSubjective ? data.elements : undefined,
-        rubric: isSubjective && data.rubric_title ? {
-          title: data.rubric_title,
-          description: data.rubric_description,
-          criteria: data.criteria,
-        } : undefined,
       })
       await refetch()
       alert('저장 완료')

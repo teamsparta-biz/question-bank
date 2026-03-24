@@ -1,8 +1,6 @@
 import { useState } from 'react'
-import { ELEMENTS, ACTIVE_TIERS, type ElementTier } from '../../lib/constants'
 import McqOptionEditor from './mcq/McqOptionEditor'
 import LabelForm from './LabelForm'
-import ElementMappingGrid from './subjective/ElementMappingGrid'
 import type { QuestionFormData } from '../../types'
 
 const EMPTY_FORM: QuestionFormData = {
@@ -21,12 +19,6 @@ const EMPTY_FORM: QuestionFormData = {
   position: '공통',
   topic_id: '',
   difficulty: '',
-  complexity: '',
-  task_type: '',
-  elements: [],
-  rubric_title: '',
-  rubric_description: '',
-  criteria: [],
 }
 
 interface Props {
@@ -39,26 +31,8 @@ export default function QuestionForm({ initialData, onSave, saving }: Props) {
   const [form, setForm] = useState<QuestionFormData>(initialData ?? EMPTY_FORM)
 
   const set = <K extends keyof QuestionFormData>(key: K, value: QuestionFormData[K]) => {
-    setForm(prev => {
-      const next = { ...prev, [key]: value }
-      // 객관식 전환 시 산업/직급 '공통' 고정, 난이도 초기화
-      if (key === 'response_type' && value !== 'text') {
-        next.industry = '공통'
-        next.position = '공통'
-        next.difficulty = ''
-      }
-      // 복잡도 변경 시 Element 자동 매핑
-      if (key === 'complexity' && typeof value === 'string' && value) {
-        const tiers = ACTIVE_TIERS[value] ?? []
-        next.elements = ELEMENTS
-          .filter(e => tiers.includes(e.tier as ElementTier))
-          .map(e => e.id)
-      }
-      return next
-    })
+    setForm(prev => ({ ...prev, [key]: value }))
   }
-
-  const isSubjective = form.response_type === 'text'
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -78,7 +52,6 @@ export default function QuestionForm({ initialData, onSave, saving }: Props) {
           {[
             { value: 'single_choice', label: '단일 선택' },
             { value: 'multiple_choice', label: '복수 선택' },
-            { value: 'text', label: '주관식' },
           ].map(opt => (
             <button
               key={opt.value}
@@ -86,9 +59,7 @@ export default function QuestionForm({ initialData, onSave, saving }: Props) {
               onClick={() => set('response_type', opt.value as QuestionFormData['response_type'])}
               className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
                 form.response_type === opt.value
-                  ? opt.value === 'text'
-                    ? 'bg-teal-50 border-teal-300 text-teal-700'
-                    : 'bg-primary-50 border-primary-300 text-primary-700'
+                  ? 'bg-primary-50 border-primary-300 text-primary-700'
                   : 'border-slate-300 text-slate-500 hover:bg-slate-50'
               }`}
             >
@@ -109,7 +80,7 @@ export default function QuestionForm({ initialData, onSave, saving }: Props) {
               value={form.title}
               onChange={e => set('title', e.target.value)}
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              placeholder={isSubjective ? '과제 시나리오 제목' : '문항 제목 (질문)'}
+              placeholder="문항 제목 (질문)"
             />
           </div>
           <div>
@@ -119,7 +90,7 @@ export default function QuestionForm({ initialData, onSave, saving }: Props) {
               onChange={e => set('description', e.target.value)}
               rows={4}
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-y"
-              placeholder={isSubjective ? '과제 상황 설명' : '지문이나 시나리오 (선택)'}
+              placeholder="지문이나 시나리오 (선택)"
             />
           </div>
           <label className="flex items-center gap-2 text-sm">
@@ -134,35 +105,19 @@ export default function QuestionForm({ initialData, onSave, saving }: Props) {
         </div>
       </div>
 
-      {/* MCQ: 선택지 */}
-      {!isSubjective && (
-        <McqOptionEditor
-          options={form.options}
-          responseType={form.response_type}
-          onChange={opts => set('options', opts)}
-        />
-      )}
+      {/* 선택지 */}
+      <McqOptionEditor
+        options={form.options}
+        responseType={form.response_type}
+        onChange={opts => set('options', opts)}
+      />
 
       {/* 분류 */}
       <LabelForm
-        isSubjective={isSubjective}
         category={form.category}
-        industry={form.industry}
-        position={form.position}
         topicId={form.topic_id}
-        difficulty={form.difficulty}
-        complexity={form.complexity}
         onChange={(key, value) => set(key as keyof QuestionFormData, value)}
       />
-
-      {/* 주관식: Element 매핑 (복잡도에 따라 자동 선택, 수동 조정 가능) */}
-      {isSubjective && (
-        <ElementMappingGrid
-          complexity={form.complexity}
-          selected={form.elements}
-          onChange={els => set('elements', els)}
-        />
-      )}
 
       {/* 저장 */}
       <div className="flex justify-end">
