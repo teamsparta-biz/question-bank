@@ -12,9 +12,15 @@ interface PoolQuestionJoined {
     response_type: string
     title: string
     description: string | null
-    question_label: QuestionLabel[]
+    question_label: QuestionLabel | QuestionLabel[] | null
     question_option: QuestionOption[]
   }
+}
+
+function getLabel(q: PoolQuestionJoined['question']): QuestionLabel | null {
+  if (!q.question_label) return null
+  if (Array.isArray(q.question_label)) return q.question_label[0] ?? null
+  return q.question_label
 }
 
 const CAT_LABELS: Record<string, string> = { P: '프롬프트 리터러시', E: '윤리/보안', D: '데이터 리터러시', W: '워크플로우 설계' }
@@ -73,7 +79,7 @@ export default function PoolPrintPage() {
   // 카테고리별 그룹
   const byCategory: Record<string, PoolQuestionJoined[]> = {}
   questions.forEach(pq => {
-    const label = pq.question.question_label?.[0]
+    const label = getLabel(pq.question)
     const cat = label?.category ?? '미분류'
     if (!byCategory[cat]) byCategory[cat] = []
     byCategory[cat].push(pq)
@@ -145,7 +151,7 @@ export default function PoolPrintPage() {
 
               {byCategory[cat].map((pq) => {
                 globalIndex++
-                const label = pq.question.question_label?.[0]
+                const label = getLabel(pq.question)
                 const options = [...(pq.question.question_option ?? [])].sort((a, b) => a.sort_order - b.sort_order)
                 return (
                   <div key={pq.id} style={{ padding: '0 40px 20px', pageBreakInside: 'avoid' }}>
@@ -195,7 +201,7 @@ export default function PoolPrintPage() {
                     let ansIdx = 0
                     return questions.map((pq) => {
                       ansIdx++
-                      const label = pq.question.question_label?.[0]
+                      const label = getLabel(pq.question)
                       const options = [...(pq.question.question_option ?? [])].sort((a, b) => a.sort_order - b.sort_order)
                       const correctIdx = options.findIndex(o => o.is_correct)
                       const correctMark = correctIdx >= 0 ? String.fromCharCode(9312 + correctIdx) : '-'
