@@ -153,10 +153,8 @@ export default function PoolPrintPage() {
                 globalIndex++
                 const label = getLabel(pq.question)
                 const options = [...(pq.question.question_option ?? [])].sort((a, b) => a.sort_order - b.sort_order)
-                const maxOptLen = Math.max(...options.map(o => o.label.length))
-                const useOneCol = maxOptLen > 50
                 return (
-                  <div key={pq.id} style={{ padding: '0 40px 16px', pageBreakInside: 'avoid' }}>
+                  <div key={pq.id} style={{ padding: '0 40px 14px', pageBreakInside: 'avoid' }}>
                     <div style={{ background: '#f8fafc', borderRadius: '8px', padding: '14px 18px', border: '1px solid #e2e8f0' }}>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '8px' }}>
                         <span style={{ fontSize: '12px', fontWeight: 700, color: '#2563eb', flexShrink: 0 }}>Q{globalIndex}</span>
@@ -170,7 +168,7 @@ export default function PoolPrintPage() {
                         <p style={{ fontSize: '10.5px', color: '#475569', margin: '0 0 8px 0', padding: '8px 12px', background: '#fff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>{pq.question.description}</p>
                       )}
 
-                      <div style={{ display: 'grid', gridTemplateColumns: useOneCol ? '1fr' : '1fr 1fr', gap: '5px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         {options.map((o, oi) => (
                           <div key={o.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', padding: '5px 10px', borderRadius: '6px', background: o.is_correct ? '#eff6ff' : '#fff', border: o.is_correct ? '1px solid #93c5fd' : '1px solid #e2e8f0' }}>
                             <span style={{ fontSize: '10px', fontWeight: 600, color: o.is_correct ? '#2563eb' : '#94a3b8', minWidth: '14px', flexShrink: 0 }}>{String.fromCharCode(9312 + oi)}</span>
