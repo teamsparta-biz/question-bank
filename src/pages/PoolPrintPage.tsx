@@ -154,7 +154,7 @@ export default function PoolPrintPage() {
                 const label = getLabel(pq.question)
                 const options = [...(pq.question.question_option ?? [])].sort((a, b) => a.sort_order - b.sort_order)
                 return (
-                  <div key={pq.id} style={{ padding: '0 40px', marginBottom: '10px', borderTop: pqIdx > 0 ? '1px solid #e2e8f0' : 'none', paddingTop: pqIdx > 0 ? '14px' : '0' }}>
+                  <div key={pq.id} style={{ padding: '0 40px', marginBottom: '10px', borderTop: pqIdx > 0 ? '1px solid #e2e8f0' : 'none', paddingTop: pqIdx > 0 ? '14px' : '0', pageBreakInside: 'avoid' }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '8px' }}>
                       <span style={{ fontSize: '12px', fontWeight: 700, color: '#2563eb', flexShrink: 0 }}>Q{globalIndex}</span>
                       <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#0f172a', flex: 1 }}>{pq.question.title}</span>
