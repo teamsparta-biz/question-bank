@@ -20,8 +20,18 @@ const FUNNEL_STEPS = [
   { key: 'E', label: 'E 윤리/보안', count: 5, type: 'mcq' as const },
   { key: 'D', label: 'D 데이터 리터러시', count: 5, type: 'mcq' as const },
   { key: 'W', label: 'W 워크플로우 설계', count: 5, type: 'mcq' as const },
-  { key: 'subjective', label: '주관식', count: 0, type: 'subjective' as const },
+  { key: 'subjective', label: '주관식', count: 2, type: 'subjective' as const },
 ]
+
+// Fisher-Yates 셔플 후 n개 추출
+function pickRandom<T>(arr: T[], n: number): T[] {
+  const copy = [...arr]
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]]
+  }
+  return copy.slice(0, n)
+}
 
 // ---- 퍼널 컴포넌트 ----
 function QuestionPicker({
@@ -44,7 +54,7 @@ function QuestionPicker({
         .select('*, question_label(*), question_option(*), pool_question(count)')
         .eq('is_active', true)
         .order('updated_at', { ascending: false })
-        .limit(200)
+        .limit(500)
       const mapped = (questions ?? []).map((q: Record<string, unknown>) => ({
         ...q,
         pool_count: Array.isArray(q.pool_question) && q.pool_question.length > 0
@@ -54,6 +64,29 @@ function QuestionPicker({
       setLoading(false)
     })()
   }, [])
+
+  // 랜덤 자동 구성: 각 카테고리별 랜덤 5개 + 주관식 랜덤 2개
+  const autoRandom = () => {
+    const available = allQuestions.filter(q => !existingIds.has(q.id))
+    const next: Record<string, string[]> = { P: [], E: [], D: [], W: [], subjective: [] }
+
+    for (const s of FUNNEL_STEPS) {
+      const pool = available.filter(q => {
+        const label = getLabel(q)
+        if (s.type === 'mcq') {
+          return q.response_type !== 'text' && label?.category === s.key
+        }
+        return q.response_type === 'text'
+      })
+      // 이미 다른 단계에서 선택된 ID 제외
+      const usedIds = new Set(Object.values(next).flat())
+      const eligible = pool.filter(q => !usedIds.has(q.id))
+      next[s.key] = pickRandom(eligible, s.count).map(q => q.id)
+    }
+
+    setSelected(next)
+    setStep(0)
+  }
 
   const currentStep = FUNNEL_STEPS[step]
   const currentSelected = selected[currentStep.key] ?? []
@@ -101,6 +134,12 @@ function QuestionPicker({
     <div className="bg-white rounded-xl border border-primary-200 mb-4">
       {/* 퍼널 스텝 바 */}
       <div className="flex border-b border-slate-200 overflow-x-auto">
+        <button
+          onClick={autoRandom}
+          className="px-4 py-2.5 text-xs font-medium whitespace-nowrap text-amber-600 hover:text-amber-700 hover:bg-amber-50 transition-colors border-r border-slate-200"
+        >
+          랜덤 자동 구성
+        </button>
         {FUNNEL_STEPS.map((s, i) => {
           const cnt = (selected[s.key] ?? []).length
           const isActive = i === step

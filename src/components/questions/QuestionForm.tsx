@@ -17,8 +17,8 @@ const EMPTY_FORM: QuestionFormData = {
     { label: '', is_correct: false, sort_order: 3 },
   ],
   category: '',
-  industry: '',
-  position: '',
+  industry: '공통',
+  position: '공통',
   topic_id: '',
   difficulty: '',
   complexity: '',
@@ -41,6 +41,12 @@ export default function QuestionForm({ initialData, onSave, saving }: Props) {
   const set = <K extends keyof QuestionFormData>(key: K, value: QuestionFormData[K]) => {
     setForm(prev => {
       const next = { ...prev, [key]: value }
+      // 객관식 전환 시 산업/직급 '공통' 고정, 난이도 초기화
+      if (key === 'response_type' && value !== 'text') {
+        next.industry = '공통'
+        next.position = '공통'
+        next.difficulty = ''
+      }
       // 복잡도 변경 시 Element 자동 매핑
       if (key === 'complexity' && typeof value === 'string' && value) {
         const tiers = ACTIVE_TIERS[value] ?? []

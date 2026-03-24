@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuestions } from '../hooks/useQuestions'
 import FilterPanel from '../components/common/FilterPanel'
+import CoverageDashboard from '../components/common/CoverageDashboard'
 import Badge from '../components/common/Badge'
 import { CATEGORIES } from '../lib/constants'
 import type { QuestionFilters } from '../types'
@@ -46,6 +47,7 @@ export default function QuestionsPage() {
         </Link>
       </div>
 
+      <CoverageDashboard />
       <FilterPanel filters={filters} onChange={setFilters} />
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">

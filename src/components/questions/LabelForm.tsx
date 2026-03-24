@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../../lib/supabase'
-import { CATEGORIES, INDUSTRIES, POSITIONS, DIFFICULTIES, COMPLEXITIES } from '../../lib/constants'
+import { CATEGORIES, INDUSTRIES, POSITIONS, COMPLEXITIES } from '../../lib/constants'
 import type { Topic } from '../../types'
 
 interface Props {
@@ -84,27 +84,25 @@ export default function LabelForm({ isSubjective, category, industry, position, 
         </div>
       )}
 
-      {/* 공통: 산업 + 직급 + 난이도 */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <Select
-          label="산업"
-          value={industry}
-          onChange={v => { onChange('industry', v); if (!isSubjective) onChange('topic_id', '') }}
-          options={Object.entries(INDUSTRIES).map(([k, v]) => ({ value: k, label: v }))}
-        />
-        <Select
-          label="직급"
-          value={position}
-          onChange={v => { onChange('position', v); if (!isSubjective) onChange('topic_id', '') }}
-          options={Object.entries(POSITIONS).map(([k, v]) => ({ value: k, label: v }))}
-        />
-        <Select
-          label="난이도"
-          value={difficulty}
-          onChange={v => onChange('difficulty', v)}
-          options={Object.entries(DIFFICULTIES).map(([k, v]) => ({ value: k, label: v }))}
-        />
-      </div>
+      {/* 주관식만: 산업 + 직급 (객관식은 '공통' 고정) */}
+      {isSubjective ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <Select
+            label="산업"
+            value={industry}
+            onChange={v => onChange('industry', v)}
+            options={Object.entries(INDUSTRIES).map(([k, v]) => ({ value: k, label: v }))}
+          />
+          <Select
+            label="직급"
+            value={position}
+            onChange={v => onChange('position', v)}
+            options={Object.entries(POSITIONS).map(([k, v]) => ({ value: k, label: v }))}
+          />
+        </div>
+      ) : (
+        <p className="text-xs text-slate-400 mt-2">객관식은 산업·직급 '공통', 난이도 자동(정답률 기반) 고정</p>
+      )}
     </div>
   )
 }
