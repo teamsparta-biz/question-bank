@@ -112,35 +112,35 @@ export default function PoolPrintPage() {
         <div ref={printRef} style={{ fontFamily: "'Pretendard', 'Noto Sans KR', sans-serif", color: '#1e293b', fontSize: '11px', lineHeight: '1.6' }}>
 
           {/* 표지 */}
-          <div style={{ padding: '60px 40px', minHeight: '280mm', display: 'flex', flexDirection: 'column', justifyContent: 'center', pageBreakAfter: 'always' }}>
-            <div style={{ borderLeft: '4px solid #2563eb', paddingLeft: '20px', marginBottom: '40px' }}>
+          <div style={{ padding: '60px 40px 40px', pageBreakAfter: 'always' }}>
+            <div style={{ borderLeft: '4px solid #2563eb', paddingLeft: '20px', marginBottom: '48px' }}>
               <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0' }}>{pool.name}</h1>
               {pool.description && (
                 <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>{pool.description}</p>
               )}
             </div>
 
-            <div style={{ display: 'flex', gap: '24px', marginBottom: '40px' }}>
-              <div style={{ background: '#f1f5f9', borderRadius: '8px', padding: '16px 20px', flex: 1 }}>
-                <div style={{ fontSize: '10px', color: '#94a3b8', marginBottom: '4px' }}>총 문항</div>
-                <div style={{ fontSize: '24px', fontWeight: 700, color: '#2563eb' }}>{questions.length}<span style={{ fontSize: '12px', color: '#64748b', marginLeft: '2px' }}>문항</span></div>
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${sortedCategories.filter(c => c !== '미분류').length + 1}, 1fr)`, gap: '16px', marginBottom: '48px' }}>
+              <div style={{ background: '#eff6ff', borderRadius: '8px', padding: '16px 20px', textAlign: 'center' }}>
+                <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '6px' }}>총 문항</div>
+                <div style={{ fontSize: '28px', fontWeight: 700, color: '#2563eb' }}>{questions.length}</div>
               </div>
               {sortedCategories.filter(c => c !== '미분류').map(cat => (
-                <div key={cat} style={{ background: '#f1f5f9', borderRadius: '8px', padding: '16px 20px', flex: 1 }}>
-                  <div style={{ fontSize: '10px', color: '#94a3b8', marginBottom: '4px' }}>{cat} {CAT_LABELS[cat]}</div>
-                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a' }}>{byCategory[cat].length}<span style={{ fontSize: '12px', color: '#64748b', marginLeft: '2px' }}>문항</span></div>
+                <div key={cat} style={{ background: '#f8fafc', borderRadius: '8px', padding: '16px 20px', textAlign: 'center', border: '1px solid #e2e8f0' }}>
+                  <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '6px' }}>{cat} {CAT_LABELS[cat]}</div>
+                  <div style={{ fontSize: '28px', fontWeight: 700, color: '#0f172a' }}>{byCategory[cat].length}</div>
                 </div>
               ))}
             </div>
 
-            <div style={{ marginTop: 'auto', paddingTop: '40px', fontSize: '10px', color: '#94a3b8', borderTop: '1px solid #e2e8f0' }}>
+            <div style={{ fontSize: '10px', color: '#94a3b8', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
               생성일: {today}
             </div>
           </div>
 
           {/* 카테고리별 문항 */}
-          {sortedCategories.map(cat => (
-            <div key={cat} style={{ pageBreakBefore: 'always' }}>
+          {sortedCategories.map((cat, catIdx) => (
+            <div key={cat} style={catIdx > 0 ? { pageBreakBefore: 'always' } : undefined}>
               <div style={{ padding: '24px 40px 0' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', paddingBottom: '12px', borderBottom: '2px solid #e2e8f0' }}>
                   <span style={{ display: 'inline-block', width: '28px', height: '28px', borderRadius: '6px', background: cat === 'P' ? '#2563eb' : cat === 'E' ? '#dc2626' : cat === 'D' ? '#16a34a' : cat === 'W' ? '#9333ea' : '#64748b', color: '#fff', textAlign: 'center', lineHeight: '28px', fontSize: '14px', fontWeight: 700 }}>{cat}</span>
@@ -153,26 +153,28 @@ export default function PoolPrintPage() {
                 globalIndex++
                 const label = getLabel(pq.question)
                 const options = [...(pq.question.question_option ?? [])].sort((a, b) => a.sort_order - b.sort_order)
+                const maxOptLen = Math.max(...options.map(o => o.label.length))
+                const useOneCol = maxOptLen > 50
                 return (
-                  <div key={pq.id} style={{ padding: '0 40px 20px', pageBreakInside: 'avoid' }}>
-                    <div style={{ background: '#f8fafc', borderRadius: '8px', padding: '16px 20px', border: '1px solid #e2e8f0' }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '10px' }}>
-                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#2563eb' }}>Q{globalIndex}</span>
-                        <span style={{ fontSize: '12px', fontWeight: 600, color: '#0f172a', flex: 1 }}>{pq.question.title}</span>
+                  <div key={pq.id} style={{ padding: '0 40px 16px', pageBreakInside: 'avoid' }}>
+                    <div style={{ background: '#f8fafc', borderRadius: '8px', padding: '14px 18px', border: '1px solid #e2e8f0' }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#2563eb', flexShrink: 0 }}>Q{globalIndex}</span>
+                        <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#0f172a', flex: 1 }}>{pq.question.title}</span>
                         {label?.difficulty && (
                           <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '4px', background: label.difficulty === 'Lv.1' ? '#dcfce7' : label.difficulty === 'Lv.2' ? '#fef3c7' : '#fee2e2', color: label.difficulty === 'Lv.1' ? '#16a34a' : label.difficulty === 'Lv.2' ? '#d97706' : '#dc2626', fontWeight: 600 }}>{label.difficulty}</span>
                         )}
                       </div>
 
                       {pq.question.description && (
-                        <p style={{ fontSize: '11px', color: '#475569', margin: '0 0 10px 0', padding: '8px 12px', background: '#fff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>{pq.question.description}</p>
+                        <p style={{ fontSize: '10.5px', color: '#475569', margin: '0 0 8px 0', padding: '8px 12px', background: '#fff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>{pq.question.description}</p>
                       )}
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: useOneCol ? '1fr' : '1fr 1fr', gap: '5px' }}>
                         {options.map((o, oi) => (
-                          <div key={o.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', padding: '6px 10px', borderRadius: '6px', background: o.is_correct ? '#eff6ff' : '#fff', border: o.is_correct ? '1px solid #93c5fd' : '1px solid #e2e8f0' }}>
-                            <span style={{ fontSize: '10px', fontWeight: 600, color: o.is_correct ? '#2563eb' : '#94a3b8', minWidth: '16px' }}>{String.fromCharCode(9312 + oi)}</span>
-                            <span style={{ fontSize: '11px', color: o.is_correct ? '#1e40af' : '#334155', fontWeight: o.is_correct ? 600 : 400 }}>{o.label}</span>
+                          <div key={o.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', padding: '5px 10px', borderRadius: '6px', background: o.is_correct ? '#eff6ff' : '#fff', border: o.is_correct ? '1px solid #93c5fd' : '1px solid #e2e8f0' }}>
+                            <span style={{ fontSize: '10px', fontWeight: 600, color: o.is_correct ? '#2563eb' : '#94a3b8', minWidth: '14px', flexShrink: 0 }}>{String.fromCharCode(9312 + oi)}</span>
+                            <span style={{ fontSize: '10.5px', color: o.is_correct ? '#1e40af' : '#334155', fontWeight: o.is_correct ? 600 : 400 }}>{o.label}</span>
                           </div>
                         ))}
                       </div>
