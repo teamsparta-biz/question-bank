@@ -4,7 +4,6 @@ import { useQuestions } from '../hooks/useQuestions'
 import FilterPanel from '../components/common/FilterPanel'
 import CoverageDashboard from '../components/common/CoverageDashboard'
 import Badge from '../components/common/Badge'
-import { CATEGORIES } from '../lib/constants'
 import type { QuestionFilters } from '../types'
 
 const INITIAL_FILTERS: QuestionFilters = {
@@ -17,7 +16,6 @@ const INITIAL_FILTERS: QuestionFilters = {
 }
 
 const CAT_COLORS: Record<string, string> = { P: 'blue', E: 'red', D: 'green', W: 'purple' }
-const DIFF_COLORS: Record<string, string> = { 'Lv.1': 'green', 'Lv.2': 'amber', 'Lv.3': 'red' }
 
 export default function QuestionsPage() {
   const [filters, setFilters] = useState<QuestionFilters>(INITIAL_FILTERS)
@@ -53,14 +51,13 @@ export default function QuestionsPage() {
         ) : questions.length === 0 ? (
           <div className="p-8 text-center text-slate-400">문항이 없습니다</div>
         ) : (
-          <table className="w-full text-sm">
+          <table className="w-full text-sm table-fixed">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-slate-500">유형</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-500">제목</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-500">분류</th>
-                <th className="text-center px-4 py-3 font-medium text-slate-500">v</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-500">수정일</th>
+                <th className="text-center px-2 py-3 font-medium text-slate-500 w-12">영역</th>
+                <th className="text-left px-3 py-3 font-medium text-slate-500">제목</th>
+                <th className="text-center px-2 py-3 font-medium text-slate-500 w-10">v</th>
+                <th className="text-center px-2 py-3 font-medium text-slate-500 w-20">수정일</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -68,33 +65,22 @@ export default function QuestionsPage() {
                 const label = q.question_label
                 return (
                   <tr key={q.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-3">
-                      <Badge
-                        label={q.response_type === 'single_choice' ? '단일' : '복수'}
-                        color="blue"
-                      />
+                    <td className="px-2 py-3 text-center">
+                      {label?.category && (
+                        <Badge label={label.category} color={CAT_COLORS[label.category] as 'blue' ?? 'slate'} />
+                      )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3">
                       <Link to={`/questions/${q.id}`} className="text-slate-900 hover:text-primary-600 font-medium">
                         {q.title}
                       </Link>
                       {!q.is_active && <Badge label="비활성" color="slate" className="ml-2" />}
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        {label?.category && (
-                          <Badge label={`${label.category} ${CATEGORIES[label.category as keyof typeof CATEGORIES] ?? ''}`} color={CAT_COLORS[label.category] as 'blue' ?? 'slate'} />
-                        )}
-                        {label?.difficulty && (
-                          <Badge label={`${label.difficulty}`} color={DIFF_COLORS[label.difficulty] as 'amber' ?? 'slate'} />
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-center text-slate-500">
+                    <td className="px-2 py-3 text-center text-slate-500">
                       {q.current_version}
                     </td>
-                    <td className="px-4 py-3 text-slate-500">
-                      {new Date(q.updated_at).toLocaleDateString('ko-KR')}
+                    <td className="px-2 py-3 text-center text-slate-500 text-xs whitespace-nowrap">
+                      {new Date(q.updated_at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}
                     </td>
                   </tr>
                 )
