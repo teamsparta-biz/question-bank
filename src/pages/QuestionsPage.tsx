@@ -8,9 +8,6 @@ import type { QuestionFilters } from '../types'
 
 const INITIAL_FILTERS: QuestionFilters = {
   category: '',
-  industry: '',
-  position: '',
-  difficulty: '',
   is_active: '',
   search: '',
 }

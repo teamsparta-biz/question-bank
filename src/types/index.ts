@@ -105,9 +105,6 @@ export interface QuestionFormData {
 
 export interface QuestionFilters {
   category: string
-  industry: string
-  position: string
-  difficulty: string
   is_active: string
   search: string
 }

@@ -1,4 +1,4 @@
-import { CATEGORIES, DIFFICULTIES } from '../../lib/constants'
+import { CATEGORIES } from '../../lib/constants'
 import type { QuestionFilters } from '../../types'
 
 interface Props {
@@ -45,12 +45,6 @@ export default function FilterPanel({ filters, onChange }: Props) {
           value={filters.category}
           onChange={v => set('category', v)}
           options={Object.entries(CATEGORIES).map(([k, v]) => ({ value: k, label: `${k} ${v}` }))}
-        />
-        <Select
-          label="난이도"
-          value={filters.difficulty}
-          onChange={v => set('difficulty', v)}
-          options={Object.entries(DIFFICULTIES).map(([k, v]) => ({ value: k, label: v }))}
         />
         <Select
           label="상태"

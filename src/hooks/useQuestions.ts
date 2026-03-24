@@ -20,9 +20,12 @@ export function useQuestions(filters: QuestionFilters, page: number) {
   const fetch = useCallback(async () => {
     setLoading(true)
 
+    // 카테고리 필터가 있으면 !inner join으로 question_label 필터링
+    const labelJoin = filters.category ? 'question_label!inner(*)' : 'question_label(*)'
+
     let query = supabase
       .from('question')
-      .select('*, question_label(*)', { count: 'exact' })
+      .select(`*, ${labelJoin}`, { count: 'exact' })
       .order('updated_at', { ascending: false })
       .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
 
@@ -34,15 +37,6 @@ export function useQuestions(filters: QuestionFilters, page: number) {
     }
     if (filters.category) {
       query = query.eq('question_label.category', filters.category)
-    }
-    if (filters.industry) {
-      query = query.eq('question_label.industry', filters.industry)
-    }
-    if (filters.position) {
-      query = query.eq('question_label.position', filters.position)
-    }
-    if (filters.difficulty) {
-      query = query.eq('question_label.difficulty', filters.difficulty)
     }
 
     const { data, count, error } = await query
