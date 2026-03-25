@@ -66,6 +66,32 @@ export function useNextQuestion(reviewer: string) {
   return { question, progress, loading, refetch: fetch }
 }
 
+// ---- 직전 피드백 철회 ----
+
+export async function undoLastFeedback(reviewer: string): Promise<string | null> {
+  // 가장 최근 피드백 1건 조회
+  const { data } = await supabase
+    .from('question_feedback')
+    .select('id, question_id')
+    .eq('reviewer', reviewer)
+    .order('created_at', { ascending: false })
+    .limit(1)
+
+  if (!data || data.length === 0) return null
+
+  const feedbackId = data[0].id
+  const questionId = data[0].question_id
+
+  const { error } = await supabase
+    .from('question_feedback')
+    .delete()
+    .eq('id', feedbackId)
+
+  if (error) throw new Error(`피드백 철회 실패: ${error.message}`)
+
+  return questionId
+}
+
 // ---- 피드백 제출 ----
 
 export async function submitFeedback(data: {

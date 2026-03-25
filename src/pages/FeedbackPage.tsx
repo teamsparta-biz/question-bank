@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useNextQuestion, submitFeedback } from '../hooks/useFeedback'
+import { useNextQuestion, submitFeedback, undoLastFeedback } from '../hooks/useFeedback'
 import Badge from '../components/common/Badge'
 
 const CAT_COLORS: Record<string, string> = { P: 'blue', E: 'red', D: 'green', W: 'purple' }
@@ -50,6 +50,23 @@ export default function FeedbackPage() {
 
   if (!reviewer) {
     return <ReviewerGate onEnter={handleEnter} />
+  }
+
+  const handleUndo = async () => {
+    if (submitting) return
+    setSubmitting(true)
+    try {
+      const questionId = await undoLastFeedback(reviewer)
+      if (!questionId) {
+        alert('되돌릴 피드백이 없습니다.')
+      } else {
+        await refetch()
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '오류 발생')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleVote = async (vote: 'up' | 'down' | 'skip', withComment?: string) => {
@@ -122,7 +139,17 @@ export default function FeedbackPage() {
       {/* 진행률 */}
       <div className="mb-4">
         <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-          <span>{progress.done} / {progress.total} 완료</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleUndo}
+              disabled={submitting || progress.done === 0}
+              className="text-slate-400 hover:text-slate-600 disabled:opacity-30 text-xs"
+              title="이전 문항으로 돌아가기"
+            >
+              &larr; 되돌리기
+            </button>
+            <span>{progress.done} / {progress.total} 완료</span>
+          </div>
           <span>{pct}%</span>
         </div>
         <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
