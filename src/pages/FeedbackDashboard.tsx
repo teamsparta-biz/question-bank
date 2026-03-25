@@ -53,56 +53,51 @@ export default function FeedbackDashboard() {
           <h3 className="text-sm font-semibold text-slate-700">문항별 피드백</h3>
         </div>
         <div>
-          {questionStats.map(q => (
-            <div key={q.question_id}>
-              <div
-                onClick={() => setExpandedId(expandedId === q.question_id ? null : q.question_id)}
-                className="flex items-center border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors text-sm"
-              >
-                <div className="px-4 py-2 w-16">
-                  {q.category && <Badge color={CAT_COLORS[q.category] ?? 'slate'} label={q.category} />}
+          {questionStats.map(q => {
+            const hasComments = q.feedbacks.some(f => f.comment)
+            return (
+              <div key={q.question_id}>
+                <div
+                  onClick={() => hasComments ? setExpandedId(expandedId === q.question_id ? null : q.question_id) : undefined}
+                  className={`flex items-center border-b border-slate-50 transition-colors text-sm ${hasComments ? 'hover:bg-slate-50 cursor-pointer' : ''}`}
+                >
+                  <div className="px-4 py-2 w-16">
+                    {q.category && <Badge color={CAT_COLORS[q.category] ?? 'slate'} label={q.category} />}
+                  </div>
+                  <div className="px-4 py-2 flex-1 text-slate-700 truncate">
+                    {q.title}
+                    {hasComments && (
+                      <span className="ml-2 text-xs text-amber-500">
+                        ({q.feedbacks.filter(f => f.comment).length}건 코멘트)
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-center px-3 py-2 w-16 font-medium text-green-600">{q.up || '-'}</div>
+                  <div className="text-center px-3 py-2 w-16 font-medium text-red-600">{q.down || '-'}</div>
+                  <div className="text-center px-3 py-2 w-16 text-slate-400">{q.skip || '-'}</div>
+                  <div className="text-center px-3 py-2 w-16 font-medium text-slate-700">{q.total || '-'}</div>
+                  <div className="px-3 py-2 w-8 text-slate-400 text-xs">
+                    {hasComments ? (expandedId === q.question_id ? '\u25B2' : '\u25BC') : ''}
+                  </div>
                 </div>
-                <div className="px-4 py-2 flex-1 text-slate-700 truncate">
-                  {q.title}
-                  {q.feedbacks.some(f => f.comment) && (
-                    <span className="ml-2 text-xs text-amber-500">
-                      ({q.feedbacks.filter(f => f.comment).length}건 코멘트)
-                    </span>
-                  )}
-                </div>
-                <div className="text-center px-3 py-2 w-16 font-medium text-green-600">{q.up || '-'}</div>
-                <div className="text-center px-3 py-2 w-16 font-medium text-red-600">{q.down || '-'}</div>
-                <div className="text-center px-3 py-2 w-16 text-slate-400">{q.skip || '-'}</div>
-                <div className="text-center px-3 py-2 w-16 font-medium text-slate-700">{q.total || '-'}</div>
-                <div className="px-3 py-2 w-8 text-slate-400 text-xs">
-                  {expandedId === q.question_id ? '\u25B2' : '\u25BC'}
-                </div>
-              </div>
-
-              {/* 코멘트 아코디언 */}
-              {expandedId === q.question_id && (
-                <div className="bg-slate-50 border-b border-slate-100 px-6 py-3">
-                  {q.feedbacks.length > 0 ? (
+                {expandedId === q.question_id && hasComments && (
+                  <div className="bg-slate-50 border-b border-slate-100 px-6 py-3">
                     <div className="space-y-2">
-                      {q.feedbacks.map((fb, i) => (
+                      {q.feedbacks.filter(f => f.comment).map((fb, i) => (
                         <div key={i} className="flex items-start gap-3 text-xs">
                           <span className="font-medium text-slate-600 w-20 flex-shrink-0">{fb.reviewer}</span>
                           <span className={`font-medium w-12 flex-shrink-0 ${VOTE_COLOR[fb.vote]}`}>
                             {VOTE_LABEL[fb.vote]}
                           </span>
-                          <span className="text-slate-500 flex-1">
-                            {fb.comment || <span className="text-slate-300">코멘트 없음</span>}
-                          </span>
+                          <span className="text-slate-500 flex-1">{fb.comment}</span>
                         </div>
                       ))}
                     </div>
-                  ) : (
-                    <div className="text-xs text-slate-400">아직 피드백이 없습니다</div>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
           {questionStats.length === 0 && (
             <div className="px-4 py-8 text-center text-slate-400">피드백 데이터가 없습니다</div>
           )}
