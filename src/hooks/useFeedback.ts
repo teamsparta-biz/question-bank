@@ -1,95 +1,80 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import type { QuestionDetail, QuestionFeedback } from '../types'
+import type { QuestionDetail, QuestionFeedback, QuestionLabel } from '../types'
 
-// ---- 다음 미피드백 문항 조회 ----
+// ---- 전체 문항 + 내 피드백 목록 (사이드바용) ----
 
-interface Progress { done: number; total: number }
+export interface QuestionSummary {
+  id: string
+  title: string
+  category: string | null
+  vote: 'up' | 'down' | 'skip' | null // null = 미피드백
+}
 
-export function useNextQuestion(reviewer: string) {
-  const [question, setQuestion] = useState<QuestionDetail | null>(null)
-  const [progress, setProgress] = useState<Progress>({ done: 0, total: 0 })
+export function useFeedbackList(reviewer: string) {
+  const [items, setItems] = useState<QuestionSummary[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetch = useCallback(async () => {
     if (!reviewer) return
     setLoading(true)
 
-    // 1. 전체 활성 문항 수
-    const { count: totalCount } = await supabase
-      .from('question')
-      .select('id', { count: 'exact', head: true })
-      .eq('is_active', true)
+    const [qRes, fbRes] = await Promise.all([
+      supabase.from('question').select('id, title, question_label(category)').eq('is_active', true).order('created_at'),
+      supabase.from('question_feedback').select('question_id, vote').eq('reviewer', reviewer),
+    ])
 
-    // 2. 이 reviewer가 피드백한 question_id 목록
-    const { data: doneRows } = await supabase
-      .from('question_feedback')
-      .select('question_id')
-      .eq('reviewer', reviewer)
+    const questions = (qRes.data ?? []) as Array<{ id: string; title: string; question_label: QuestionLabel | QuestionLabel[] | null }>
+    const feedbacks = (fbRes.data ?? []) as Array<{ question_id: string; vote: string }>
+    const fbMap = new Map(feedbacks.map(f => [f.question_id, f.vote as QuestionFeedback['vote']]))
 
-    const doneIds = (doneRows ?? []).map(r => r.question_id)
-    const doneCount = doneIds.length
-    const total = totalCount ?? 0
-
-    setProgress({ done: doneCount, total })
-
-    // 3. 미피드백 문항 1개 조회
-    let query = supabase
-      .from('question')
-      .select('*, question_label(*), question_option(*), question_version(*)')
-      .eq('is_active', true)
-      .order('created_at')
-      .limit(1)
-
-    if (doneIds.length > 0) {
-      query = query.not('id', 'in', `(${doneIds.join(',')})`)
-    }
-
-    const { data, error } = await query
-
-    if (error) {
-      console.error('Failed to fetch next question:', error)
-      setQuestion(null)
-    } else if (data && data.length > 0) {
-      const q = data[0] as Record<string, unknown>
-      if (Array.isArray(q.question_label)) q.question_label = q.question_label[0] ?? null
-      setQuestion(q as unknown as QuestionDetail)
-    } else {
-      setQuestion(null)
-    }
+    setItems(questions.map(q => {
+      const label = Array.isArray(q.question_label) ? q.question_label[0] : q.question_label
+      return {
+        id: q.id,
+        title: q.title,
+        category: label?.category ?? null,
+        vote: fbMap.get(q.id) ?? null,
+      }
+    }))
 
     setLoading(false)
   }, [reviewer])
 
   useEffect(() => { fetch() }, [fetch])
 
-  return { question, progress, loading, refetch: fetch }
+  return { items, loading, refetch: fetch }
 }
 
-// ---- 직전 피드백 철회 ----
+// ---- 특정 문항 상세 조회 ----
 
-export async function undoLastFeedback(reviewer: string): Promise<string | null> {
-  // 가장 최근 피드백 1건 조회
-  const { data } = await supabase
-    .from('question_feedback')
-    .select('id, question_id')
-    .eq('reviewer', reviewer)
-    .order('created_at', { ascending: false })
-    .limit(1)
+export function useQuestionById(questionId: string | null) {
+  const [question, setQuestion] = useState<QuestionDetail | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  if (!data || data.length === 0) return null
+  const fetch = useCallback(async () => {
+    if (!questionId) { setQuestion(null); return }
+    setLoading(true)
 
-  const feedbackId = data[0].id
-  const questionId = data[0].question_id
+    const { data, error } = await supabase
+      .from('question')
+      .select('*, question_label(*), question_option(*), question_version(*)')
+      .eq('id', questionId)
+      .single()
 
-  const { error } = await supabase
-    .from('question_feedback')
-    .delete()
-    .eq('id', feedbackId)
+    if (error) {
+      setQuestion(null)
+    } else {
+      const q = data as Record<string, unknown>
+      if (Array.isArray(q.question_label)) q.question_label = q.question_label[0] ?? null
+      setQuestion(q as unknown as QuestionDetail)
+    }
+    setLoading(false)
+  }, [questionId])
 
-  if (error) throw new Error(`피드백 철회 실패: ${error.message}`)
+  useEffect(() => { fetch() }, [fetch])
 
-  return questionId
+  return { question, loading }
 }
 
 // ---- 피드백 제출 ----
@@ -115,9 +100,21 @@ export async function submitFeedback(data: {
   }
 }
 
+// ---- 피드백 삭제 (재투표용) ----
+
+export async function deleteFeedback(questionId: string, reviewer: string) {
+  const { error } = await supabase
+    .from('question_feedback')
+    .delete()
+    .eq('question_id', questionId)
+    .eq('reviewer', reviewer)
+
+  if (error) throw new Error(`피드백 삭제 실패: ${error.message}`)
+}
+
 // ---- 대시보드 집계 ----
 
-interface QuestionStat {
+export interface QuestionStat {
   question_id: string
   title: string
   category: string | null
@@ -125,7 +122,7 @@ interface QuestionStat {
   down: number
   skip: number
   total: number
-  comments: string[]
+  feedbacks: Array<{ reviewer: string; vote: string; comment: string | null }>
 }
 
 interface ReviewerStat {
@@ -142,7 +139,6 @@ export function useFeedbackDashboard(categoryFilter?: string) {
   const fetch = useCallback(async () => {
     setLoading(true)
 
-    // 1. 전체 활성 문항 + 라벨
     const labelJoin = categoryFilter ? 'question_label!inner(category)' : 'question_label(category)'
     let qQuery = supabase
       .from('question')
@@ -154,23 +150,19 @@ export function useFeedbackDashboard(categoryFilter?: string) {
       qQuery = qQuery.eq('question_label.category', categoryFilter)
     }
 
-    const { data: questions } = await qQuery
+    const [qRes, fbRes] = await Promise.all([
+      qQuery,
+      supabase.from('question_feedback').select('*'),
+    ])
 
-    // 2. 전체 피드백
-    const { data: feedbacks } = await supabase
-      .from('question_feedback')
-      .select('*')
-
-    const allQuestions = (questions ?? []) as Array<{
-      id: string
-      title: string
+    const allQuestions = (qRes.data ?? []) as Array<{
+      id: string; title: string
       question_label: { category: string } | Array<{ category: string }> | null
     }>
-    const allFeedbacks = (feedbacks ?? []) as QuestionFeedback[]
+    const allFeedbacks = (fbRes.data ?? []) as QuestionFeedback[]
 
     setTotalQuestions(allQuestions.length)
 
-    // 3. 문항별 집계
     const statsMap = new Map<string, QuestionStat>()
     for (const q of allQuestions) {
       const label = Array.isArray(q.question_label) ? q.question_label[0] : q.question_label
@@ -179,7 +171,7 @@ export function useFeedbackDashboard(categoryFilter?: string) {
         title: q.title,
         category: label?.category ?? null,
         up: 0, down: 0, skip: 0, total: 0,
-        comments: [],
+        feedbacks: [],
       })
     }
 
@@ -190,15 +182,17 @@ export function useFeedbackDashboard(categoryFilter?: string) {
       else if (fb.vote === 'down') stat.down++
       else if (fb.vote === 'skip') stat.skip++
       stat.total++
-      if (fb.comment) stat.comments.push(`${fb.reviewer}: ${fb.comment}`)
+      stat.feedbacks.push({ reviewer: fb.reviewer, vote: fb.vote, comment: fb.comment })
     }
 
     setQuestionStats(Array.from(statsMap.values()))
 
-    // 4. 작업자별 진행률
+    // 작업자별 진행률 (패스 제외)
     const reviewerMap = new Map<string, number>()
     for (const fb of allFeedbacks) {
-      reviewerMap.set(fb.reviewer, (reviewerMap.get(fb.reviewer) ?? 0) + 1)
+      if (fb.vote !== 'skip') {
+        reviewerMap.set(fb.reviewer, (reviewerMap.get(fb.reviewer) ?? 0) + 1)
+      }
     }
     setReviewerStats(
       Array.from(reviewerMap.entries())
