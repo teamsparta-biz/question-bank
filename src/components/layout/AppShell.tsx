@@ -4,6 +4,8 @@ import type { ReactNode } from 'react'
 const NAV_ITEMS = [
   { to: '/questions', label: '문항 관리' },
   { to: '/pools', label: '문항풀' },
+  { to: '/feedback', label: '피드백' },
+  { to: '/feedback/dashboard', label: '피드백 현황' },
 ]
 
 function NavItem({ to, label }: { to: string; label: string }) {

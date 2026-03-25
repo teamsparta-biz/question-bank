@@ -7,6 +7,7 @@ const EMPTY_FORM: QuestionFormData = {
   response_type: 'single_choice',
   title: '',
   description: '',
+  explanation: '',
   is_active: true,
   options: [
     { label: '', is_correct: false, sort_order: 0 },
@@ -91,6 +92,16 @@ export default function QuestionForm({ initialData, onSave, saving }: Props) {
               rows={4}
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-y"
               placeholder="지문이나 시나리오 (선택)"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">해설</label>
+            <textarea
+              value={form.explanation}
+              onChange={e => set('explanation', e.target.value)}
+              rows={3}
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-y"
+              placeholder="정답 근거 및 오답 해설 (선택)"
             />
           </div>
           <label className="flex items-center gap-2 text-sm">

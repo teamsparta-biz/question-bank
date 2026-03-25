@@ -93,6 +93,7 @@ export async function createQuestion(data: {
   response_type: string
   title: string
   description: string
+  explanation: string
   is_active: boolean
   options: { label: string; is_correct: boolean; sort_order: number }[]
   label: {
@@ -109,6 +110,7 @@ export async function createQuestion(data: {
       response_type: data.response_type,
       title: data.title,
       description: data.description || null,
+      explanation: data.explanation || null,
       is_active: data.is_active,
     }).select().single(),
     '문항 생성'
@@ -172,6 +174,7 @@ export async function updateQuestion(
     response_type: data.response_type,
     title: data.title,
     description: data.description || null,
+    explanation: data.explanation || null,
     is_active: data.is_active,
     current_version: newVersion,
   }).eq('id', questionId)

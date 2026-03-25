@@ -21,6 +21,7 @@ export default function QuestionDetailPage() {
     response_type: question.response_type,
     title: question.title,
     description: question.description ?? '',
+    explanation: question.explanation ?? '',
     is_active: question.is_active,
     options: (question.question_option ?? [])
       .sort((a, b) => a.sort_order - b.sort_order)
@@ -39,6 +40,7 @@ export default function QuestionDetailPage() {
         response_type: data.response_type,
         title: data.title,
         description: data.description,
+        explanation: data.explanation,
         is_active: data.is_active,
         options: data.options,
         label: {

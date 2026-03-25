@@ -5,6 +5,7 @@ export interface Question {
   response_type: 'single_choice' | 'multiple_choice'
   title: string
   description: string | null
+  explanation: string | null
   current_version: number
   is_active: boolean
   created_at: string
@@ -91,6 +92,7 @@ export interface QuestionFormData {
   response_type: Question['response_type']
   title: string
   description: string
+  explanation: string
   is_active: boolean
   options: { label: string; is_correct: boolean; sort_order: number }[]
   // 분류
@@ -99,6 +101,17 @@ export interface QuestionFormData {
   position: string
   topic_id: string
   difficulty: string
+}
+
+// ---- 피드백 ----
+
+export interface QuestionFeedback {
+  id: string
+  question_id: string
+  reviewer: string
+  vote: 'up' | 'down' | 'skip'
+  comment: string | null
+  created_at: string
 }
 
 // ---- 필터 ----

@@ -15,6 +15,7 @@ export default function QuestionNewPage() {
         response_type: data.response_type,
         title: data.title,
         description: data.description,
+        explanation: data.explanation,
         is_active: data.is_active,
         options: data.options,
         label: {

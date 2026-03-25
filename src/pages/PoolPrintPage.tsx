@@ -12,6 +12,7 @@ interface PoolQuestionJoined {
     response_type: string
     title: string
     description: string | null
+    explanation: string | null
     question_label: QuestionLabel | QuestionLabel[] | null
     question_option: QuestionOption[]
   }
@@ -204,6 +205,7 @@ export default function PoolPrintPage() {
                     <th style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 600, color: '#64748b', width: '50px' }}>영역</th>
                     <th style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 600, color: '#64748b', width: '50px' }}>정답</th>
                     <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: '#64748b' }}>문항</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: '#64748b' }}>해설</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -221,6 +223,7 @@ export default function PoolPrintPage() {
                           <td style={{ padding: '6px 12px', textAlign: 'center', color: '#64748b' }}>{label?.category ?? '-'}</td>
                           <td style={{ padding: '6px 12px', textAlign: 'center', fontWeight: 700, color: '#2563eb', fontSize: '13px' }}>{correctMark}</td>
                           <td style={{ padding: '6px 12px', color: '#475569', fontSize: '10px' }}>{pq.question.title.substring(0, 50)}{pq.question.title.length > 50 ? '...' : ''}</td>
+                          <td style={{ padding: '6px 12px', color: '#64748b', fontSize: '10px' }}>{pq.question.explanation ?? ''}</td>
                         </tr>
                       )
                     })

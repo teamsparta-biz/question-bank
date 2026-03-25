@@ -8,6 +8,8 @@ import QuestionDetailPage from './pages/QuestionDetailPage'
 import PoolsPage from './pages/PoolsPage'
 import PoolDetailPage from './pages/PoolDetailPage'
 import PoolPrintPage from './pages/PoolPrintPage'
+import FeedbackPage from './pages/FeedbackPage'
+import FeedbackDashboard from './pages/FeedbackDashboard'
 
 export default function App() {
   const { isAuthenticated, login } = useAuth()
@@ -31,6 +33,8 @@ export default function App() {
             <Route path="/questions/:id" element={<QuestionDetailPage />} />
             <Route path="/pools" element={<PoolsPage />} />
             <Route path="/pools/:id" element={<PoolDetailPage />} />
+            <Route path="/feedback" element={<FeedbackPage />} />
+            <Route path="/feedback/dashboard" element={<FeedbackDashboard />} />
           </Routes>
         </AppShell>
       } />
